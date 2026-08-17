@@ -1,7 +1,7 @@
 // 回路グリッドのDOM描画と操作(クリック配置 + Pointer Eventsによるドラッグ&ドロップ)。
 import { GATES, thetaLabel } from '../quantum/gates.js';
 import {
-  ROWS, numCols, placeGate, removeGate, cycleTheta, cycleCnotTarget, cnotTargetAt,
+  ROWS, numCols, placeGate, removeGate, cycleTheta, cycleCnotTarget, markerAt,
 } from '../quantum/circuit.js';
 
 const DRAG_THRESHOLD = 6;
@@ -46,14 +46,20 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
             cellEl.appendChild(tok);
           }
         } else {
-          const ctrlRow = cnotTargetAt(circuit, r, c);
-          if (ctrlRow >= 0) {
+          const marker = markerAt(circuit, r, c);
+          if (marker && marker.kind === 'target') {
             const plus = document.createElement('div');
             plus.className = 'cnot-plus';
-            plus.dataset.ctrlRow = ctrlRow;
+            plus.dataset.ctrlRow = marker.ctrlRow;
             plus.textContent = '+';
-            plus.title = 'CNOTの対象(タップで切替)';
+            plus.title = '反転される対象(タップで切替)';
             cellEl.appendChild(plus);
+          } else if (marker && marker.kind === 'control') {
+            const dot = document.createElement('div');
+            dot.className = 'cnot-ctrl';
+            dot.dataset.ctrlRow = marker.ctrlRow;
+            dot.title = 'CCNOTの2つ目の制御';
+            cellEl.appendChild(dot);
           }
         }
         rowEl.appendChild(cellEl);
@@ -83,9 +89,11 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < numCols(circuit); c++) {
         const cell = circuit[r][c];
-        if (!cell || cell.gateId !== 'CNOT') continue;
-        const ctrlEl = cellAt(r, c);
-        const tgtEl = cellAt(cell.target, c);
+        if (!cell || (cell.gateId !== 'CNOT' && cell.gateId !== 'CCNOT')) continue;
+        // CCNOT は3行すべてを使うので列全体を結ぶ
+        const [rowA, rowB] = cell.gateId === 'CCNOT' ? [0, ROWS - 1] : [r, cell.target];
+        const ctrlEl = cellAt(rowA, c);
+        const tgtEl = cellAt(rowB, c);
         if (!ctrlEl || !tgtEl) continue;
         const a = ctrlEl.getBoundingClientRect();
         const b = tgtEl.getBoundingClientRect();
@@ -130,7 +138,7 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
       const row = +cellEl.dataset.row;
       const col = +cellEl.dataset.col;
       const tok = e.target.closest('.placed-token');
-      const plus = e.target.closest('.cnot-plus');
+      const plus = e.target.closest('.cnot-plus, .cnot-ctrl');
       if (tok) {
         drag = { source: 'board', gateId: tok.dataset.gate, row, col, startX: e.clientX, startY: e.clientY, moved: false, srcEl: tok };
         e.preventDefault();
@@ -191,7 +199,7 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
           changed = true;
           rerender = false;
         }
-        else if (d.gateId === 'CNOT') { cycleCnotTarget(circuit, d.row, d.col); changed = true; }
+        else if (d.gateId === 'CNOT' || d.gateId === 'CCNOT') { cycleCnotTarget(circuit, d.row, d.col); changed = true; }
         else { removeGate(circuit, d.row, d.col); changed = true; }
       } else if (d.source === 'cnot-plus') {
         cycleCnotTarget(circuit, d.ctrlRow, d.col);
@@ -237,9 +245,9 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
       render();
       callbacks.onChange();
     } else {
-      const ctrlRow = cnotTargetAt(circuit, row, col);
-      if (ctrlRow >= 0) {
-        removeGate(circuit, ctrlRow, col);
+      const marker = markerAt(circuit, row, col);
+      if (marker) {
+        removeGate(circuit, marker.ctrlRow, col);
         render();
         callbacks.onChange();
       }

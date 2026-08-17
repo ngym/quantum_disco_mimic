@@ -24,10 +24,11 @@
 /* パレット */
 #palette-wrap { flex: 0 0 auto; }
 #palette {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, auto);
   gap: 10px;
-  align-items: center;
+  justify-items: center;
+  align-content: start;
 }
 
 .gate-token {
@@ -151,6 +152,14 @@
   line-height: 1;
   background: var(--bg-panel);
 }
+.cell .cnot-ctrl {
+  z-index: 1;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #7dff6a;
+  box-shadow: 0 0 6px rgba(125, 255, 106, 0.55);
+}
 .cnot-link {
   position: absolute;
   width: 2.5px;
@@ -216,7 +225,7 @@
 
 @media (max-width: 720px) {
   #booth { flex-direction: column; }
-  #palette { flex-direction: row; justify-content: center; }
+  #palette { display: flex; flex-wrap: wrap; justify-content: center; }
   #controls { flex-direction: row; }
   #board { min-width: 560px; }
 }

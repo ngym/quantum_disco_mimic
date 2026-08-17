@@ -47,6 +47,19 @@ export function applyCNOT(s, control, target) {
   }
 }
 
+// CCNOT(トフォリ): target 以外の2ビットが両方 |1⟩ のとき target を反転(in-place)。
+export function applyCCNOT(s, target) {
+  const tMask = maskForQubit(target);
+  const cMask = (DIM - 1) ^ tMask; // 残り2ビットが制御
+  for (let i = 0; i < DIM; i++) {
+    if ((i & cMask) === cMask && !(i & tMask)) {
+      const j = i | tMask;
+      let tmp = s.re[i]; s.re[i] = s.re[j]; s.re[j] = tmp;
+      tmp = s.im[i]; s.im[i] = s.im[j]; s.im[j] = tmp;
+    }
+  }
+}
+
 export function probabilities(s) {
   const p = new Float64Array(DIM);
   for (let i = 0; i < DIM; i++) p[i] = s.re[i] * s.re[i] + s.im[i] * s.im[i];

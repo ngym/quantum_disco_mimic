@@ -23,7 +23,7 @@ export function createCourses(panelEl, { onAllowedChange }) {
   }
 
   function getAllowedGates() {
-    if (mode === 'free') return ['X', 'H', 'R', 'CNOT'];
+    if (mode === 'free') return ['X', 'Y', 'Z', 'H', 'R', 'CNOT', 'CCNOT'];
     if (mode === 'try') return CHALLENGES[challengeIdx].allowed;
     if (lessonComplete) return ['X', 'H', 'R'];
     return LESSON_STEPS[lessonStep].allowed;
@@ -33,7 +33,7 @@ export function createCourses(panelEl, { onAllowedChange }) {
     if (mode === 'free') {
       panelEl.innerHTML = `
         <span class="panel-badge">フリー</span>
-        <div class="panel-text">自由に量子プログラミング!すべてのゲート(X・H・R・CNOT)と15ステップが使える。お気に入りのミックスを作って <code>M</code> でフロアに落とそう。</div>`;
+        <div class="panel-text">自由に量子プログラミング!すべてのゲート(X・Y・Z・H・R・CNOT・CCNOT)と15ステップが使える。お気に入りのミックスを作って <code>M</code> でフロアに落とそう。グローバー探索(課題8のヒント参照)を組んでみるのもおすすめ。</div>`;
       return;
     }
 

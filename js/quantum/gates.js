@@ -30,6 +30,20 @@ export const GATES = {
       [[1, 0], [0, 0]],
     ],
   },
+  Y: {
+    id: 'Y', label: 'Y', name: 'Yゲート(ビット反転+位相反転)', color: '#ff9d38',
+    matrix: [
+      [[0, 0], [0, -1]],
+      [[0, 1], [0, 0]],
+    ],
+  },
+  Z: {
+    id: 'Z', label: 'Z', name: 'Zゲート(位相反転 = R(π))', color: '#b06aff',
+    matrix: [
+      [[1, 0], [0, 0]],
+      [[0, 0], [-1, 0]],
+    ],
+  },
   H: {
     id: 'H', label: 'H', name: 'Hゲート(重ね合わせ)', color: '#38c6ff',
     matrix: [
@@ -42,7 +56,11 @@ export const GATES = {
     isPhase: true,
   },
   CNOT: {
-    id: 'CNOT', label: '●', name: 'CNOTゲート(もつれ)', color: '#7dff6a',
+    id: 'CNOT', label: '●', name: 'CNOTゲート(●が1のとき⊕を反転。もつれを作る)', color: '#7dff6a',
     isCnot: true,
+  },
+  CCNOT: {
+    id: 'CCNOT', label: '◉', name: 'CCNOTゲート(トフォリ: 2つの●が両方1のとき⊕を反転)', color: '#7dff6a',
+    isCcnot: true,
   },
 };
