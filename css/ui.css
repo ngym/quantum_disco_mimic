@@ -1,6 +1,7 @@
 /* コースパネル・スタートオーバーレイ */
 
 #course-panel {
+  position: relative; /* ヒントのポップオーバー基準 */
   background: var(--bg-panel);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -67,12 +68,20 @@
   background: transparent;
   color: var(--fg-dim);
 }
+/* ヒントはポップオーバー表示にしてレイアウトの高さを変えない */
 .hint-text {
-  flex-basis: 100%;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 12px;
+  right: 12px;
+  z-index: 40;
+  background: var(--bg-panel2);
+  border: 1px solid var(--accent2);
+  border-radius: 10px;
+  padding: 10px 14px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55);
   font-size: 0.78rem;
-  color: var(--fg-dim);
-  border-top: 1px dashed var(--border);
-  padding-top: 8px;
+  color: var(--fg);
   line-height: 1.6;
 }
 .challenge-list {

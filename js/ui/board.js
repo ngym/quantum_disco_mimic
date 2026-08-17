@@ -1,7 +1,7 @@
 // 回路グリッドのDOM描画と操作(クリック配置 + Pointer Eventsによるドラッグ&ドロップ)。
 import { GATES, thetaLabel } from '../quantum/gates.js';
 import {
-  ROWS, numCols, placeGate, removeGate, cycleTheta, cycleCnotControl, markerAt,
+  ROWS, numCols, placeGate, removeGate, cycleTheta, cycleCnotControl, markerAt, cellOccupied,
 } from '../quantum/circuit.js';
 
 const DRAG_THRESHOLD = 6;
@@ -9,8 +9,15 @@ const DRAG_THRESHOLD = 6;
 export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
   // callbacks: { onChange(), isLocked() }
   let drag = null;
+  let selection = new Set(); // 範囲選択中のセル "r,c"(まとめて移動用)
+  const keyOf = (r, c) => `${r},${c}`;
 
   function render() {
+    // 消えたゲートを選択から外す
+    for (const key of [...selection]) {
+      const [r, c] = key.split(',').map(Number);
+      if (!circuit[r][c]) selection.delete(key);
+    }
     boardEl.innerHTML = '';
     const cols = numCols(circuit);
     for (let r = 0; r < ROWS; r++) {
@@ -43,6 +50,7 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
             glyph.dataset.rot = deg;
             glyph.style.transform = `rotate(${deg}deg)`;
           }
+          if (selection.has(keyOf(r, c))) tok.classList.add('multi-selected');
           cellEl.appendChild(tok);
         } else {
           const marker = markerAt(circuit, r, c);
@@ -146,7 +154,8 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
       const tok = e.target.closest('.placed-token');
       const ctrl = e.target.closest('.cnot-ctrl');
       if (tok) {
-        drag = { source: 'board', gateId: tok.dataset.gate, row, col, startX: e.clientX, startY: e.clientY, moved: false, srcEl: tok };
+        const source = selection.has(keyOf(row, col)) ? 'group' : 'board';
+        drag = { source, gateId: tok.dataset.gate, row, col, startX: e.clientX, startY: e.clientY, moved: false, srcEl: tok };
         e.preventDefault();
       } else if (ctrl) {
         drag = { source: 'marker', gateRow: +ctrl.dataset.gateRow, col, startX: e.clientX, startY: e.clientY, moved: false };
@@ -162,12 +171,35 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
     const dx = e.clientX - drag.startX;
     const dy = e.clientY - drag.startY;
     if (!drag.moved && Math.hypot(dx, dy) > DRAG_THRESHOLD) {
-      if (drag.source === 'cell' || drag.source === 'marker') { drag = null; return; }
+      if (drag.source === 'marker') { drag = null; return; }
       drag.moved = true;
-      showGhost(drag.gateId);
-      if (drag.srcEl) drag.srcEl.classList.add('dragging');
+      if (drag.source === 'cell') {
+        // 空きマスからのドラッグ = 範囲選択
+        drag.source = 'rubber';
+        drag.boxEl = document.createElement('div');
+        drag.boxEl.className = 'select-box';
+        boardEl.appendChild(drag.boxEl);
+      } else {
+        showGhost(drag.gateId, drag.source === 'group' ? selection.size : 0);
+        if (drag.srcEl) drag.srcEl.classList.add('dragging');
+        if (drag.source === 'group') {
+          for (const key of selection) {
+            const [r, c] = key.split(',').map(Number);
+            cellAt(r, c)?.querySelector('.placed-token')?.classList.add('dragging');
+          }
+        }
+      }
     }
     if (drag.moved) {
+      if (drag.source === 'rubber') {
+        const rect = boardEl.getBoundingClientRect();
+        drag.boxEl.style.left = `${Math.min(drag.startX, e.clientX) - rect.left}px`;
+        drag.boxEl.style.top = `${Math.min(drag.startY, e.clientY) - rect.top}px`;
+        drag.boxEl.style.width = `${Math.abs(e.clientX - drag.startX)}px`;
+        drag.boxEl.style.height = `${Math.abs(e.clientY - drag.startY)}px`;
+        e.preventDefault();
+        return;
+      }
       ghostEl.style.left = `${e.clientX}px`;
       ghostEl.style.top = `${e.clientY}px`;
       clearDropHints();
@@ -183,7 +215,9 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
     drag = null;
     hideGhost();
     clearDropHints();
+    if (d.boxEl) d.boxEl.remove();
     if (d.srcEl) d.srcEl.classList.remove('dragging');
+    for (const el of boardEl.querySelectorAll('.placed-token.dragging')) el.classList.remove('dragging');
     if (callbacks.isLocked()) return;
 
     let changed = false;
@@ -192,7 +226,7 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
       // クリック(タップ)操作
       if (d.source === 'palette') {
         paletteApi.toggleSelect(d.gateId);
-      } else if (d.source === 'board') {
+      } else if (d.source === 'board' || d.source === 'group') {
         if (d.gateId === 'R') {
           // θを巡回し、再描画せずにその場で「R」を回転(常に前向きに45°ずつ回す)
           cycleTheta(circuit, d.row, d.col);
@@ -211,11 +245,36 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
         cycleCnotControl(circuit, d.gateRow, d.col);
         changed = true;
       } else if (d.source === 'cell') {
+        if (selection.size) { selection.clear(); changed = true; } // 空きマスタップで選択解除
         const sel = paletteApi.getSelected();
-        if (sel) changed = placeGate(circuit, d.row, d.col, sel);
+        if (sel) changed = placeGate(circuit, d.row, d.col, sel) || changed;
       }
+    } else if (d.source === 'rubber') {
+      // 範囲内のゲートを選択
+      const x1 = Math.min(d.startX, e.clientX);
+      const x2 = Math.max(d.startX, e.clientX);
+      const y1 = Math.min(d.startY, e.clientY);
+      const y2 = Math.max(d.startY, e.clientY);
+      selection = new Set();
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < numCols(circuit); c++) {
+          if (!circuit[r][c]) continue;
+          const rect = cellAt(r, c).getBoundingClientRect();
+          if (rect.left < x2 && rect.right > x1 && rect.top < y2 && rect.bottom > y1) {
+            selection.add(keyOf(r, c));
+          }
+        }
+      }
+      render();
+      return;
+    } else if (d.source === 'group') {
+      const cellEl = cellFromPoint(e.clientX, e.clientY);
+      if (cellEl) {
+        changed = tryGroupMove(+cellEl.dataset.row - d.row, +cellEl.dataset.col - d.col);
+      }
+      // 盤外や置けない場所へのドロップはキャンセル(まとめて削除はしない)
     } else {
-      // ドラッグ操作
+      // 単体ドラッグ操作
       const cellEl = cellFromPoint(e.clientX, e.clientY);
       if (d.source === 'palette') {
         if (cellEl) changed = placeGate(circuit, +cellEl.dataset.row, +cellEl.dataset.col, d.gateId);
@@ -260,11 +319,63 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
     }
   }
 
-  function showGhost(gateId) {
+  // 選択中のゲート一式を (dr, dc) だけ平行移動する。全部置ける場合のみ実行して true。
+  function tryGroupMove(dr, dc) {
+    if (dr === 0 && dc === 0) return false;
+    const moves = [];
+    for (const key of selection) {
+      const [r, c] = key.split(',').map(Number);
+      if (circuit[r][c]) moves.push({ r, c, cell: circuit[r][c] });
+    }
+    if (!moves.length) return false;
+    // 移動後の占有セル(本体 + CX の C マーカー + CCX の列全体)を集めて相互衝突を検査
+    const occ = new Set();
+    for (const m of moves) {
+      const nr = m.r + dr;
+      const nc = m.c + dc;
+      if (nr < 0 || nr >= ROWS || nc < 0 || nc >= numCols(circuit)) return false;
+      const gateCells = new Set([keyOf(nr, nc)]);
+      if (m.cell.gateId === 'CNOT') {
+        const ncr = m.cell.control + dr;
+        if (ncr < 0 || ncr >= ROWS) return false;
+        gateCells.add(keyOf(ncr, nc));
+      } else if (m.cell.gateId === 'CCNOT') {
+        for (let r2 = 0; r2 < ROWS; r2++) gateCells.add(keyOf(r2, nc));
+      }
+      for (const k of gateCells) {
+        if (occ.has(k)) return false;
+        occ.add(k);
+      }
+    }
+    // 動かないゲートとの衝突を検査(選択分をいったん外して判定)
+    for (const m of moves) circuit[m.r][m.c] = null;
+    for (const k of occ) {
+      const [r, c] = k.split(',').map(Number);
+      if (cellOccupied(circuit, r, c)) {
+        for (const m of moves) circuit[m.r][m.c] = m.cell; // 元に戻す
+        return false;
+      }
+    }
+    for (const m of moves) {
+      const cell = { ...m.cell };
+      if (cell.gateId === 'CNOT') cell.control += dr;
+      circuit[m.r + dr][m.c + dc] = cell;
+    }
+    selection = new Set(moves.map((m) => keyOf(m.r + dr, m.c + dc)));
+    return true;
+  }
+
+  function showGhost(gateId, count = 0) {
     ghostEl.innerHTML = '';
     const tok = makeToken(gateId);
     tok.classList.remove('placed-token');
     ghostEl.appendChild(tok);
+    if (count > 1) {
+      const badge = document.createElement('div');
+      badge.className = 'ghost-count';
+      badge.textContent = `×${count}`;
+      ghostEl.appendChild(badge);
+    }
     ghostEl.hidden = false;
   }
 
