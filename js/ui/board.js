@@ -179,15 +179,15 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
         drag.boxEl = document.createElement('div');
         drag.boxEl.className = 'select-box';
         boardEl.appendChild(drag.boxEl);
-      } else {
-        showGhost(drag.gateId, drag.source === 'group' ? selection.size : 0);
-        if (drag.srcEl) drag.srcEl.classList.add('dragging');
-        if (drag.source === 'group') {
-          for (const key of selection) {
-            const [r, c] = key.split(',').map(Number);
-            cellAt(r, c)?.querySelector('.placed-token')?.classList.add('dragging');
-          }
+      } else if (drag.source === 'group') {
+        showGroupGhost(drag);
+        for (const key of selection) {
+          const [r, c] = key.split(',').map(Number);
+          cellAt(r, c)?.querySelector('.placed-token')?.classList.add('dragging');
         }
+      } else {
+        showGhost(drag.gateId);
+        if (drag.srcEl) drag.srcEl.classList.add('dragging');
       }
     }
     if (drag.moved) {
@@ -204,7 +204,19 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
       ghostEl.style.top = `${e.clientY}px`;
       clearDropHints();
       const cellEl = cellFromPoint(e.clientX, e.clientY);
-      if (cellEl) cellEl.classList.add('drop-hint');
+      if (cellEl) {
+        if (drag.source === 'group') {
+          // 移動先の全セルをハイライト
+          const dr = +cellEl.dataset.row - drag.row;
+          const dc = +cellEl.dataset.col - drag.col;
+          for (const key of selection) {
+            const [r, c] = key.split(',').map(Number);
+            cellAt(r + dr, c + dc)?.classList.add('drop-hint');
+          }
+        } else {
+          cellEl.classList.add('drop-hint');
+        }
+      }
       e.preventDefault();
     }
   }
@@ -365,17 +377,42 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
     return true;
   }
 
-  function showGhost(gateId, count = 0) {
+  function showGhost(gateId) {
     ghostEl.innerHTML = '';
     const tok = makeToken(gateId);
     tok.classList.remove('placed-token');
     ghostEl.appendChild(tok);
-    if (count > 1) {
-      const badge = document.createElement('div');
-      badge.className = 'ghost-count';
-      badge.textContent = `×${count}`;
-      ghostEl.appendChild(badge);
+    ghostEl.hidden = false;
+  }
+
+  // 選択中の全トークンを、盤面上の相対位置のままゴーストとして表示する。
+  // 掴んだトークンがポインタの真下に来るように配置する。
+  function showGroupGhost(d) {
+    ghostEl.innerHTML = '';
+    const grabbed = cellAt(d.row, d.col);
+    const rect = grabbed ? grabbed.getBoundingClientRect() : { width: 42, height: 52 };
+    const pitchX = rect.width + 4;  // セル幅 + グリッドgap
+    const pitchY = rect.height + 4;
+    const wrap = document.createElement('div');
+    wrap.style.position = 'relative';
+    for (const key of selection) {
+      const [r, c] = key.split(',').map(Number);
+      const cell = circuit[r][c];
+      if (!cell) continue;
+      const tok = makeToken(cell.gateId);
+      tok.classList.remove('placed-token');
+      if (cell.gateId === 'CNOT' || cell.gateId === 'CCNOT') {
+        tok.querySelector('.glyph').textContent = 'X';
+      } else if (cell.gateId === 'R') {
+        tok.querySelector('.glyph').style.transform = `rotate(${(cell.theta * 180) / Math.PI}deg)`;
+      }
+      tok.style.position = 'absolute';
+      tok.style.left = `${(c - d.col) * pitchX}px`;
+      tok.style.top = `${(r - d.row) * pitchY}px`;
+      tok.style.transform = 'translate(-50%, -50%)';
+      wrap.appendChild(tok);
     }
+    ghostEl.appendChild(wrap);
     ghostEl.hidden = false;
   }
 

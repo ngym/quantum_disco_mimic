@@ -8,6 +8,8 @@
   border-radius: 14px;
   padding: 12px;
   align-items: stretch;
+  /* フリー(ゲート7種=パレット4段)でも収まる高さで固定し、コース切替で伸縮しない */
+  min-height: 308px;
 }
 #booth.locked #board, #booth.locked #palette {
   opacity: 0.55;
@@ -99,17 +101,7 @@
   border-radius: 6px;
   pointer-events: none;
 }
-#drag-ghost .ghost-count {
-  position: absolute;
-  right: -16px;
-  top: -12px;
-  background: var(--accent2);
-  color: #06121e;
-  font-size: 0.7rem;
-  font-weight: bold;
-  border-radius: 999px;
-  padding: 2px 6px;
-}
+#drag-ghost .gate-token { opacity: 0.9; }
 
 #drag-ghost {
   position: fixed;
@@ -261,7 +253,7 @@
 .board-help .sym-ctrl { color: #7dff6a; font-weight: bold; }
 
 @media (max-width: 720px) {
-  #booth { flex-direction: column; }
+  #booth { flex-direction: column; min-height: 0; }
   #palette-wrap { flex: none; }
   #palette { display: flex; flex-wrap: wrap; justify-content: center; }
   #controls { flex-direction: row; }

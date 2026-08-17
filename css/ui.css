@@ -6,7 +6,8 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px 16px;
-  min-height: 64px;
+  /* いちばん長いレッスン文でも収まる高さで固定し、ステップ/コース切替で伸縮しない */
+  min-height: 116px;
   display: flex;
   align-items: center;
   gap: 14px;
