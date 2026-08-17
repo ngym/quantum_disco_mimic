@@ -49,6 +49,24 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.4);
   position: relative;
 }
+.palette-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.palette-caption {
+  font-size: 0.55rem;
+  color: var(--fg-dim);
+  text-align: center;
+  line-height: 1.1;
+  max-width: 56px;
+}
+/* CX・CCX は文字数が多いので少し小さく */
+.gate-token[data-gate="CNOT"], .gate-token[data-gate="CCNOT"] {
+  font-size: 0.78rem;
+  letter-spacing: -0.02em;
+}
 .gate-token .glyph {
   display: inline-block;
   transform-origin: 50% 50%;
@@ -220,8 +238,11 @@
   margin-top: 8px;
   font-size: 0.68rem;
   color: var(--fg-dim);
-  line-height: 1.5;
+  line-height: 1.6;
 }
+.board-help strong { color: var(--fg); font-weight: normal; }
+.board-help .sym-target,
+.board-help .sym-ctrl { color: #7dff6a; font-weight: bold; }
 
 @media (max-width: 720px) {
   #booth { flex-direction: column; }

@@ -58,7 +58,7 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
             const dot = document.createElement('div');
             dot.className = 'cnot-ctrl';
             dot.dataset.ctrlRow = marker.ctrlRow;
-            dot.title = 'CCNOTの2つ目の制御';
+            dot.title = 'CCXの2つ目の制御(この行が1のときだけ作動)';
             cellEl.appendChild(dot);
           }
         }

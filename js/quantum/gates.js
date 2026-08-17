@@ -24,43 +24,43 @@ export function rMatrix(theta) {
 
 export const GATES = {
   X: {
-    id: 'X', label: 'X', name: 'Xゲート(ビット反転)', color: '#ff4d9d',
+    id: 'X', label: 'X', caption: 'ビット反転', name: 'Xゲート(ビット反転)', color: '#ff4d9d',
     matrix: [
       [[0, 0], [1, 0]],
       [[1, 0], [0, 0]],
     ],
   },
   Y: {
-    id: 'Y', label: 'Y', name: 'Yゲート(ビット反転+位相反転)', color: '#ff9d38',
+    id: 'Y', label: 'Y', caption: '反転+位相', name: 'Yゲート(ビット反転+位相反転)', color: '#ff9d38',
     matrix: [
       [[0, 0], [0, -1]],
       [[0, 1], [0, 0]],
     ],
   },
   Z: {
-    id: 'Z', label: 'Z', name: 'Zゲート(位相反転 = R(π))', color: '#b06aff',
+    id: 'Z', label: 'Z', caption: '位相反転', name: 'Zゲート(位相反転 = R(π))', color: '#b06aff',
     matrix: [
       [[1, 0], [0, 0]],
       [[0, 0], [-1, 0]],
     ],
   },
   H: {
-    id: 'H', label: 'H', name: 'Hゲート(重ね合わせ)', color: '#38c6ff',
+    id: 'H', label: 'H', caption: '重ね合わせ', name: 'Hゲート(重ね合わせ)', color: '#38c6ff',
     matrix: [
       [[S, 0], [S, 0]],
       [[S, 0], [-S, 0]],
     ],
   },
   R: {
-    id: 'R', label: 'R', name: 'Rゲート(位相回転)', color: '#ffc53d',
+    id: 'R', label: 'R', caption: '位相回転', name: 'Rゲート(位相回転)', color: '#ffc53d',
     isPhase: true,
   },
   CNOT: {
-    id: 'CNOT', label: '●', name: 'CNOTゲート(●が1のとき⊕を反転。もつれを作る)', color: '#7dff6a',
+    id: 'CNOT', label: 'CX', caption: '条件反転', name: 'CXゲート(CNOT: トークンの行が1のとき⊕を反転。もつれを作る)', color: '#7dff6a',
     isCnot: true,
   },
   CCNOT: {
-    id: 'CCNOT', label: '◉', name: 'CCNOTゲート(トフォリ: 2つの●が両方1のとき⊕を反転)', color: '#7dff6a',
+    id: 'CCNOT', label: 'CCX', caption: '2条件反転', name: 'CCXゲート(トフォリ/CCNOT: トークンの行と●の行が両方1のとき⊕を反転)', color: '#7dff6a',
     isCcnot: true,
   },
 };

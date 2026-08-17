@@ -9,6 +9,8 @@ export function createPalette(el) {
     el.innerHTML = '';
     for (const id of allowed) {
       const g = GATES[id];
+      const item = document.createElement('div');
+      item.className = 'palette-item';
       const tok = document.createElement('div');
       tok.className = 'gate-token palette-token';
       tok.dataset.gate = id;
@@ -16,7 +18,12 @@ export function createPalette(el) {
       tok.textContent = g.label;
       tok.title = g.name;
       if (id === selected) tok.classList.add('selected');
-      el.appendChild(tok);
+      const cap = document.createElement('div');
+      cap.className = 'palette-caption';
+      cap.textContent = g.caption;
+      item.appendChild(tok);
+      item.appendChild(cap);
+      el.appendChild(item);
     }
   }
 
