@@ -48,7 +48,7 @@ export const CHALLENGES = [
     judge: (c) =>
       inRange(c.probs[2], 0.45, 0.55) && inRange(c.probs[7], 0.45, 0.55) &&
       c.probs.every((p, i) => i === 2 || i === 7 || isSmall(p)),
-    hint: 'q0 と q2 が連動して変わる=「もつれ」が必要。q1 に X、q0 に H、そして q0 に CX を置いて ⊕ を q2 へ。',
+    hint: 'q0 と q2 が連動して変わる=「もつれ」が必要。q1 に X、q0 に H、そして q0 に CX を置いて「反転される行(X印)」を q2 に。',
   },
   {
     title: '課題7',

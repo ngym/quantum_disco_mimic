@@ -28,38 +28,38 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
         cellEl.dataset.col = c;
         const cell = circuit[r][c];
         if (cell) {
-          if (cell.gateId === 'CNOT') {
-            cellEl.appendChild(makeToken('CNOT'));
-          } else {
-            const tok = makeToken(cell.gateId);
-            if (cell.gateId === 'R') {
-              const th = document.createElement('span');
-              th.className = 'theta';
-              th.textContent = thetaLabel(cell.theta);
-              tok.appendChild(th);
-              // 選択中のθに合わせて「R」の文字を回転
-              const deg = (cell.theta * 180) / Math.PI;
-              const glyph = tok.querySelector('.glyph');
-              glyph.dataset.rot = deg;
-              glyph.style.transform = `rotate(${deg}deg)`;
-            }
-            cellEl.appendChild(tok);
+          const tok = makeToken(cell.gateId);
+          if (cell.gateId === 'CNOT' || cell.gateId === 'CCNOT') {
+            // 盤面では C-(C)-X が縦に並ぶ表示: 置いたトークンは制御「C」
+            tok.querySelector('.glyph').textContent = 'C';
+          } else if (cell.gateId === 'R') {
+            const th = document.createElement('span');
+            th.className = 'theta';
+            th.textContent = thetaLabel(cell.theta);
+            tok.appendChild(th);
+            // 選択中のθに合わせて「R」の文字を回転
+            const deg = (cell.theta * 180) / Math.PI;
+            const glyph = tok.querySelector('.glyph');
+            glyph.dataset.rot = deg;
+            glyph.style.transform = `rotate(${deg}deg)`;
           }
+          cellEl.appendChild(tok);
         } else {
           const marker = markerAt(circuit, r, c);
           if (marker && marker.kind === 'target') {
-            const plus = document.createElement('div');
-            plus.className = 'cnot-plus';
-            plus.dataset.ctrlRow = marker.ctrlRow;
-            plus.textContent = '+';
-            plus.title = '反転される対象(タップで切替)';
-            cellEl.appendChild(plus);
+            const m = document.createElement('div');
+            m.className = 'cnot-plus';
+            m.dataset.ctrlRow = marker.ctrlRow;
+            m.textContent = 'X';
+            m.title = '反転される行(タップで切替)';
+            cellEl.appendChild(m);
           } else if (marker && marker.kind === 'control') {
-            const dot = document.createElement('div');
-            dot.className = 'cnot-ctrl';
-            dot.dataset.ctrlRow = marker.ctrlRow;
-            dot.title = 'CCXの2つ目の制御(この行が1のときだけ作動)';
-            cellEl.appendChild(dot);
+            const m = document.createElement('div');
+            m.className = 'cnot-ctrl';
+            m.dataset.ctrlRow = marker.ctrlRow;
+            m.textContent = 'C';
+            m.title = 'CCXの2つ目の制御(この行が1のときだけ作動)';
+            cellEl.appendChild(m);
           }
         }
         rowEl.appendChild(cellEl);

@@ -56,11 +56,11 @@ export const GATES = {
     isPhase: true,
   },
   CNOT: {
-    id: 'CNOT', label: 'CX', caption: '条件反転', name: 'CXゲート(CNOT: トークンの行が1のとき⊕を反転。もつれを作る)', color: '#7dff6a',
+    id: 'CNOT', label: 'CX', caption: '条件反転', name: 'CXゲート(CNOT: C の行が1のとき X の行を反転。もつれを作る)', color: '#7dff6a',
     isCnot: true,
   },
   CCNOT: {
-    id: 'CCNOT', label: 'CCX', caption: '2条件反転', name: 'CCXゲート(トフォリ/CCNOT: トークンの行と●の行が両方1のとき⊕を反転)', color: '#7dff6a',
+    id: 'CCNOT', label: 'CCX', caption: '2条件反転', name: 'CCXゲート(トフォリ/CCNOT: 2つの C が両方1のとき X の行を反転)', color: '#7dff6a',
     isCcnot: true,
   },
 };
