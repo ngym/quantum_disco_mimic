@@ -1,0 +1,7 @@
+{
+  "name": "quantum-disco-mimic",
+  "version": "1.0.0",
+  "description": "日本科学未来館「量子コンピュータ・ディスコ」に着想を得た非公式ファンリメイク",
+  "type": "module",
+  "private": true
+}

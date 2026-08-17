@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>量子コンピュータ・ディスコ(非公式リメイク)</title>
+<meta name="description" content="DJ体験で量子コンピュータの原理を学ぶ。日本科学未来館の展示に着想を得た非公式ファンリメイク。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪩</text></svg>">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/floor.css">
+<link rel="stylesheet" href="css/board.css">
+<link rel="stylesheet" href="css/ui.css">
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <h1>量子コンピュータ・ディスコ <span class="sub">非公式リメイク</span></h1>
+    <nav id="course-tabs">
+      <button data-mode="lesson" class="tab active">レッスン</button>
+      <button data-mode="try" class="tab">トライ</button>
+      <button data-mode="free" class="tab">フリー</button>
+    </nav>
+    <button id="mute-btn" title="ミュート">🔊</button>
+  </header>
+
+  <section id="floor-area">
+    <div id="beams">
+      <div class="beam b1"></div>
+      <div class="beam b2"></div>
+      <div class="beam b3"></div>
+    </div>
+    <div id="mirrorball"><div class="ball"></div><div class="string"></div></div>
+    <canvas id="floor-canvas"></canvas>
+    <div id="announce" hidden>
+      <div class="announce-label">🎉 観測結果 🎉</div>
+      <div class="announce-song"></div>
+      <div class="announce-bits"></div>
+    </div>
+  </section>
+
+  <section id="meter" aria-label="各曲の出現確率"></section>
+
+  <section id="course-panel"></section>
+
+  <section id="booth" aria-label="DJブース(量子回路)">
+    <div id="palette-wrap">
+      <div class="booth-label">ゲート</div>
+      <div id="palette"></div>
+    </div>
+    <div id="board-wrap">
+      <div id="board"></div>
+      <div class="board-help">トークン: ドラッグで配置/移動、盤外へドラッグか右クリックで削除。R はタップで角度切替、CNOT(●)はタップで対象切替、X・H はタップで削除。</div>
+    </div>
+    <div id="controls">
+      <button id="measure-btn" title="観測する"><span class="m">M</span><span class="label">観測</span></button>
+      <button id="release-btn" hidden>もう一度<br>ミックス</button>
+      <button id="reset-btn">リセット</button>
+    </div>
+  </section>
+
+  <footer id="credit">
+    日本科学未来館の常設展示「量子コンピュータ・ディスコ」に着想を得た非公式ファンリメイクです。展示の素材・楽曲は一切使用していません(音楽はすべてWeb Audio APIで合成)。
+  </footer>
+</div>
+
+<div id="start-overlay">
+  <div class="overlay-inner">
+    <div class="overlay-ball">🪩</div>
+    <h2>量子コンピュータ・ディスコ</h2>
+    <p>3つの量子ビットが8曲のレコードになる。<br>ゲートを置いて曲を重ね合わせ、観測(M)でフロアに1曲を落とそう。</p>
+    <button id="enter-btn">▶ フロアに入る</button>
+    <div id="render-progress" hidden>
+      <div class="bar"><div class="fill"></div></div>
+      <p class="progress-label">音楽を合成中…</p>
+    </div>
+    <p class="overlay-note">🔊 音が出ます</p>
+  </div>
+</div>
+
+<div id="drag-ghost" hidden></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

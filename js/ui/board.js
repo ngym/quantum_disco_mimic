@@ -1,0 +1,253 @@
+// 回路グリッドのDOM描画と操作(クリック配置 + Pointer Eventsによるドラッグ&ドロップ)。
+import { GATES, thetaLabel } from '../quantum/gates.js';
+import {
+  ROWS, numCols, placeGate, removeGate, cycleTheta, cycleCnotTarget, cnotTargetAt,
+} from '../quantum/circuit.js';
+
+const DRAG_THRESHOLD = 6;
+
+export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
+  // callbacks: { onChange(), isLocked() }
+  let drag = null;
+
+  function render() {
+    boardEl.innerHTML = '';
+    const cols = numCols(circuit);
+    for (let r = 0; r < ROWS; r++) {
+      const rowEl = document.createElement('div');
+      rowEl.className = 'board-row';
+      rowEl.style.setProperty('--cols', cols);
+      const label = document.createElement('div');
+      label.className = 'row-label';
+      label.textContent = `q${r}`;
+      rowEl.appendChild(label);
+      for (let c = 0; c < cols; c++) {
+        const cellEl = document.createElement('div');
+        cellEl.className = 'cell';
+        cellEl.dataset.row = r;
+        cellEl.dataset.col = c;
+        const cell = circuit[r][c];
+        if (cell) {
+          if (cell.gateId === 'CNOT') {
+            const tok = makeToken('CNOT');
+            tok.textContent = '●';
+            cellEl.appendChild(tok);
+          } else {
+            const tok = makeToken(cell.gateId);
+            if (cell.gateId === 'R') {
+              const th = document.createElement('span');
+              th.className = 'theta';
+              th.textContent = thetaLabel(cell.theta);
+              tok.appendChild(th);
+            }
+            cellEl.appendChild(tok);
+          }
+        } else {
+          const ctrlRow = cnotTargetAt(circuit, r, c);
+          if (ctrlRow >= 0) {
+            const plus = document.createElement('div');
+            plus.className = 'cnot-plus';
+            plus.dataset.ctrlRow = ctrlRow;
+            plus.textContent = '+';
+            plus.title = 'CNOTの対象(タップで切替)';
+            cellEl.appendChild(plus);
+          }
+        }
+        rowEl.appendChild(cellEl);
+      }
+      boardEl.appendChild(rowEl);
+    }
+    drawCnotLinks();
+  }
+
+  function makeToken(gateId) {
+    const g = GATES[gateId];
+    const tok = document.createElement('div');
+    tok.className = 'gate-token placed-token';
+    tok.dataset.gate = gateId;
+    tok.style.background = g.color;
+    tok.textContent = g.label;
+    tok.title = g.name;
+    return tok;
+  }
+
+  // CNOTの制御(●)と対象(⊕)を結ぶ縦線
+  function drawCnotLinks() {
+    const boardRect = boardEl.getBoundingClientRect();
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < numCols(circuit); c++) {
+        const cell = circuit[r][c];
+        if (!cell || cell.gateId !== 'CNOT') continue;
+        const ctrlEl = cellAt(r, c);
+        const tgtEl = cellAt(cell.target, c);
+        if (!ctrlEl || !tgtEl) continue;
+        const a = ctrlEl.getBoundingClientRect();
+        const b = tgtEl.getBoundingClientRect();
+        const link = document.createElement('div');
+        link.className = 'cnot-link';
+        const x = a.left + a.width / 2 - boardRect.left - 1.25;
+        const top = Math.min(a.top + a.height / 2, b.top + b.height / 2) - boardRect.top;
+        const bottom = Math.max(a.top + a.height / 2, b.top + b.height / 2) - boardRect.top;
+        link.style.left = `${x}px`;
+        link.style.top = `${top}px`;
+        link.style.height = `${bottom - top}px`;
+        boardEl.appendChild(link);
+      }
+    }
+  }
+
+  function cellAt(row, col) {
+    return boardEl.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+  }
+
+  function cellFromPoint(x, y) {
+    const el = document.elementFromPoint(x, y);
+    return el ? el.closest('.cell') : null;
+  }
+
+  function clearDropHints() {
+    for (const el of boardEl.querySelectorAll('.drop-hint')) el.classList.remove('drop-hint');
+  }
+
+  // ---- Pointer Events ----
+
+  function onPointerDown(e) {
+    if (callbacks.isLocked() || e.button === 2) return;
+    const palTok = e.target.closest('.palette-token');
+    if (palTok) {
+      drag = { source: 'palette', gateId: palTok.dataset.gate, startX: e.clientX, startY: e.clientY, moved: false, srcEl: palTok };
+      e.preventDefault();
+      return;
+    }
+    const cellEl = e.target.closest('.cell');
+    if (cellEl && boardEl.contains(cellEl)) {
+      const row = +cellEl.dataset.row;
+      const col = +cellEl.dataset.col;
+      const tok = e.target.closest('.placed-token');
+      const plus = e.target.closest('.cnot-plus');
+      if (tok) {
+        drag = { source: 'board', gateId: tok.dataset.gate, row, col, startX: e.clientX, startY: e.clientY, moved: false, srcEl: tok };
+        e.preventDefault();
+      } else if (plus) {
+        drag = { source: 'cnot-plus', ctrlRow: +plus.dataset.ctrlRow, col, startX: e.clientX, startY: e.clientY, moved: false };
+        e.preventDefault();
+      } else {
+        drag = { source: 'cell', row, col, startX: e.clientX, startY: e.clientY, moved: false };
+      }
+    }
+  }
+
+  function onPointerMove(e) {
+    if (!drag) return;
+    const dx = e.clientX - drag.startX;
+    const dy = e.clientY - drag.startY;
+    if (!drag.moved && Math.hypot(dx, dy) > DRAG_THRESHOLD) {
+      if (drag.source === 'cell' || drag.source === 'cnot-plus') { drag = null; return; }
+      drag.moved = true;
+      showGhost(drag.gateId);
+      if (drag.srcEl) drag.srcEl.classList.add('dragging');
+    }
+    if (drag.moved) {
+      ghostEl.style.left = `${e.clientX}px`;
+      ghostEl.style.top = `${e.clientY}px`;
+      clearDropHints();
+      const cellEl = cellFromPoint(e.clientX, e.clientY);
+      if (cellEl) cellEl.classList.add('drop-hint');
+      e.preventDefault();
+    }
+  }
+
+  function onPointerUp(e) {
+    if (!drag) return;
+    const d = drag;
+    drag = null;
+    hideGhost();
+    clearDropHints();
+    if (d.srcEl) d.srcEl.classList.remove('dragging');
+    if (callbacks.isLocked()) return;
+
+    let changed = false;
+    if (!d.moved) {
+      // クリック(タップ)操作
+      if (d.source === 'palette') {
+        paletteApi.toggleSelect(d.gateId);
+      } else if (d.source === 'board') {
+        if (d.gateId === 'R') { cycleTheta(circuit, d.row, d.col); changed = true; }
+        else if (d.gateId === 'CNOT') { cycleCnotTarget(circuit, d.row, d.col); changed = true; }
+        else { removeGate(circuit, d.row, d.col); changed = true; }
+      } else if (d.source === 'cnot-plus') {
+        cycleCnotTarget(circuit, d.ctrlRow, d.col);
+        changed = true;
+      } else if (d.source === 'cell') {
+        const sel = paletteApi.getSelected();
+        if (sel) changed = placeGate(circuit, d.row, d.col, sel);
+      }
+    } else {
+      // ドラッグ操作
+      const cellEl = cellFromPoint(e.clientX, e.clientY);
+      if (d.source === 'palette') {
+        if (cellEl) changed = placeGate(circuit, +cellEl.dataset.row, +cellEl.dataset.col, d.gateId);
+      } else if (d.source === 'board') {
+        const original = circuit[d.row][d.col];
+        removeGate(circuit, d.row, d.col);
+        if (cellEl) {
+          const nr = +cellEl.dataset.row;
+          const nc = +cellEl.dataset.col;
+          if (!placeGate(circuit, nr, nc, d.gateId)) {
+            circuit[d.row][d.col] = original; // 置けなければ元に戻す
+          } else if (original.gateId === 'R') {
+            circuit[nr][nc].theta = original.theta; // θを引き継ぐ
+          }
+        }
+        changed = true; // 盤外ドロップは削除
+      }
+    }
+    if (changed) {
+      render();
+      callbacks.onChange();
+    }
+  }
+
+  function onContextMenu(e) {
+    const cellEl = e.target.closest('.cell');
+    if (!cellEl || !boardEl.contains(cellEl) || callbacks.isLocked()) return;
+    e.preventDefault();
+    const row = +cellEl.dataset.row;
+    const col = +cellEl.dataset.col;
+    if (circuit[row][col]) {
+      removeGate(circuit, row, col);
+      render();
+      callbacks.onChange();
+    } else {
+      const ctrlRow = cnotTargetAt(circuit, row, col);
+      if (ctrlRow >= 0) {
+        removeGate(circuit, ctrlRow, col);
+        render();
+        callbacks.onChange();
+      }
+    }
+  }
+
+  function showGhost(gateId) {
+    const g = GATES[gateId];
+    ghostEl.innerHTML = '';
+    const tok = makeToken(gateId);
+    tok.classList.remove('placed-token');
+    tok.textContent = g.label;
+    ghostEl.appendChild(tok);
+    ghostEl.hidden = false;
+  }
+
+  function hideGhost() {
+    ghostEl.hidden = true;
+  }
+
+  paletteApi.el.addEventListener('pointerdown', onPointerDown);
+  boardEl.addEventListener('pointerdown', onPointerDown);
+  document.addEventListener('pointermove', onPointerMove);
+  document.addEventListener('pointerup', onPointerUp);
+  boardEl.addEventListener('contextmenu', onContextMenu);
+
+  render();
+  return { render };
+}

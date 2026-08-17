@@ -1,0 +1,163 @@
+/* コースパネル・スタートオーバーレイ */
+
+#course-panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.panel-badge {
+  flex: 0 0 auto;
+  font-size: 0.7rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(56, 198, 255, 0.15);
+  border: 1px solid var(--accent2);
+  color: var(--accent2);
+  white-space: nowrap;
+}
+.panel-badge.ok {
+  background: rgba(125, 255, 106, 0.15);
+  border-color: var(--ok);
+  color: var(--ok);
+}
+.panel-text {
+  flex: 1 1 300px;
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+.panel-text .goal { color: #ffc53d; }
+.panel-text code {
+  font-family: ui-monospace, monospace;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+.panel-text .success-msg { color: var(--ok); font-weight: bold; }
+.panel-actions {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.panel-btn {
+  border: 1px solid var(--accent2);
+  background: rgba(56, 198, 255, 0.12);
+  color: var(--fg);
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.panel-btn:hover { background: rgba(56, 198, 255, 0.28); }
+.panel-btn.primary {
+  border-color: var(--ok);
+  background: rgba(125, 255, 106, 0.15);
+}
+.panel-btn.primary:hover { background: rgba(125, 255, 106, 0.3); }
+.panel-btn.ghost {
+  border-color: var(--border);
+  background: transparent;
+  color: var(--fg-dim);
+}
+.hint-text {
+  flex-basis: 100%;
+  font-size: 0.78rem;
+  color: var(--fg-dim);
+  border-top: 1px dashed var(--border);
+  padding-top: 8px;
+  line-height: 1.6;
+}
+.challenge-list {
+  display: flex;
+  gap: 5px;
+  flex: 0 0 auto;
+}
+.challenge-dot {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-panel2);
+  color: var(--fg-dim);
+  font-size: 0.68rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.challenge-dot.current { border-color: var(--accent2); color: var(--fg); }
+.challenge-dot.cleared { border-color: var(--ok); color: var(--ok); }
+
+/* スタートオーバーレイ */
+#start-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: radial-gradient(ellipse at 50% 30%, #2a1a50 0%, #0b0714 75%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition: opacity 0.5s;
+}
+#start-overlay.hidden { opacity: 0; pointer-events: none; }
+.overlay-inner { max-width: 480px; padding: 24px; }
+.overlay-ball {
+  font-size: 4rem;
+  animation: overlay-bob 2.4s ease-in-out infinite;
+}
+@keyframes overlay-bob {
+  0%, 100% { transform: translateY(0) rotate(-6deg); }
+  50% { transform: translateY(-12px) rotate(6deg); }
+}
+#start-overlay h2 {
+  margin: 12px 0;
+  font-size: 1.6rem;
+  background: linear-gradient(90deg, #ff4d9d, #ffc53d, #38c6ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+#start-overlay p { color: var(--fg-dim); line-height: 1.9; margin-bottom: 20px; }
+#enter-btn {
+  font-size: 1.1rem;
+  padding: 14px 42px;
+  border-radius: 999px;
+  border: 2px solid var(--accent);
+  background: linear-gradient(90deg, rgba(255, 77, 157, 0.25), rgba(56, 198, 255, 0.25));
+  color: var(--fg);
+  cursor: pointer;
+  box-shadow: 0 0 24px rgba(255, 77, 157, 0.35);
+  transition: transform 0.15s;
+}
+#enter-btn:hover { transform: scale(1.06); }
+#render-progress { margin-top: 20px; }
+#render-progress .bar {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+#render-progress .fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ff4d9d, #ffc53d, #38c6ff);
+  transition: width 0.2s;
+}
+#render-progress .progress-label {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+}
+.overlay-note { font-size: 0.75rem; margin-top: 18px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay-ball { animation: none; }
+}

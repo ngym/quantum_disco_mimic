@@ -1,0 +1,216 @@
+/* ダンスフロア・ミラーボール・照明・確率メーター */
+
+#floor-area {
+  position: relative;
+  height: 200px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 0%, #241540 0%, #0b0714 70%);
+  border: 1px solid var(--border);
+}
+
+#floor-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ミラーボール */
+#mirrorball {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  pointer-events: none;
+}
+#mirrorball .string {
+  position: absolute;
+  top: 0; left: 50%;
+  width: 2px; height: 14px;
+  background: #666;
+}
+#mirrorball .ball {
+  margin-top: 14px;
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(from 0deg, #dfe6ff 0deg 12deg, #8fa0d0 12deg 24deg),
+    radial-gradient(circle at 35% 30%, #ffffffcc, #7080b0 70%);
+  background-blend-mode: overlay;
+  box-shadow:
+    0 0 18px 4px rgba(200, 220, 255, calc(0.25 + var(--party) * 0.5)),
+    inset -8px -10px 18px rgba(0, 0, 30, 0.6);
+  animation: ball-spin 6s linear infinite;
+}
+@keyframes ball-spin {
+  from { background-position: 0 0, 0 0; }
+  to { background-position: 112px 0, 0 0; }
+}
+
+/* ライトビーム */
+#beams {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: calc(0.25 + var(--party) * 0.75);
+  mix-blend-mode: screen;
+}
+.beam {
+  position: absolute;
+  top: -30%;
+  left: 50%;
+  width: 340px;
+  height: 170%;
+  transform-origin: top center;
+  background: linear-gradient(to bottom, rgba(255, 77, 157, 0.5), transparent 75%);
+  clip-path: polygon(48% 0, 52% 0, 90% 100%, 10% 100%);
+  animation: beam-sway 5s ease-in-out infinite alternate;
+}
+.beam.b2 {
+  background: linear-gradient(to bottom, rgba(56, 198, 255, 0.5), transparent 75%);
+  animation-duration: 3.8s;
+  animation-delay: -1.5s;
+}
+.beam.b3 {
+  background: linear-gradient(to bottom, rgba(255, 197, 61, 0.45), transparent 75%);
+  animation-duration: 6.5s;
+  animation-delay: -3s;
+}
+@keyframes beam-sway {
+  from { transform: translateX(-50%) rotate(-32deg); }
+  to { transform: translateX(-50%) rotate(32deg); }
+}
+
+/* ストロボ(観測の瞬間) */
+#floor-area.strobe::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: #fff;
+  animation: strobe-flash 0.6s steps(2, jump-none) forwards;
+  pointer-events: none;
+}
+@keyframes strobe-flash {
+  0% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+/* 観測結果の発表 */
+#announce {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(6, 3, 14, 0.45);
+  text-shadow: 0 2px 12px #000;
+  animation: announce-in 0.4s ease-out;
+}
+#announce .announce-label { font-size: 0.8rem; color: var(--fg-dim); letter-spacing: 0.2em; }
+#announce .announce-song {
+  font-size: 2rem;
+  font-weight: bold;
+  background: linear-gradient(90deg, #ffc53d, #ff4d9d, #38c6ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 10px rgba(255, 200, 100, 0.5));
+}
+#announce .announce-bits { font-family: ui-monospace, monospace; color: var(--fg-dim); }
+@keyframes announce-in {
+  from { opacity: 0; transform: scale(1.15); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* 確率メーター */
+#meter {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 8px;
+}
+.meter-col {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 6px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+.meter-col.hot {
+  border-color: #fff;
+  box-shadow: 0 0 14px 2px rgba(255, 255, 255, 0.35);
+}
+.meter-col.winner {
+  border-color: var(--ok);
+  box-shadow: 0 0 16px 3px rgba(125, 255, 106, 0.45);
+}
+.meter-bar-wrap {
+  position: relative;
+  width: 100%;
+  height: 90px;
+  background: #0d0918;
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+.meter-bar {
+  width: 100%;
+  height: 0%;
+  border-radius: 4px 4px 0 0;
+  transition: height 0.18s ease-out;
+  box-shadow: 0 0 12px currentColor;
+}
+.meter-pct {
+  position: absolute;
+  top: 4px;
+  left: 0; right: 0;
+  text-align: center;
+  font-size: 0.72rem;
+  font-family: ui-monospace, monospace;
+  color: var(--fg);
+  text-shadow: 0 1px 3px #000;
+}
+.phase-dial {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 2px solid;
+  background: rgba(0, 0, 0, 0.45);
+  transition: transform 0.15s, border-color 0.15s, opacity 0.2s;
+}
+.phase-dial::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 0;
+  width: 2px; height: 6px;
+  margin-left: -1px;
+  background: currentColor;
+  border-radius: 1px;
+}
+.meter-bits { font-family: ui-monospace, monospace; font-size: 0.78rem; color: var(--fg-dim); }
+.meter-name { font-size: 0.72rem; text-align: center; line-height: 1.2; min-height: 2.4em; }
+
+@media (max-width: 720px) {
+  #meter { grid-template-columns: repeat(4, 1fr); }
+  #floor-area { height: 150px; }
+  .meter-bar-wrap { height: 60px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #mirrorball .ball, .beam { animation: none; }
+  #floor-area.strobe::after { animation: none; opacity: 0; }
+}
