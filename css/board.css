@@ -155,10 +155,11 @@
   z-index: 1;
   font-size: 0.95rem;
 }
-/* CX/CCX の行マーカー: X = 反転される行、C = 2つ目の制御 */
-.cell .cnot-plus,
+/* CX/CCX の制御マーカー C(すべて同サイズの◯) */
 .cell .cnot-ctrl {
   z-index: 1;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   border: 2.5px solid #7dff6a;
   color: #7dff6a;
@@ -166,18 +167,9 @@
   align-items: center;
   justify-content: center;
   font-weight: bold;
+  font-size: 0.85rem;
   line-height: 1;
   background: var(--bg-panel);
-}
-.cell .cnot-plus {
-  width: 28px;
-  height: 28px;
-  font-size: 0.95rem;
-}
-.cell .cnot-ctrl {
-  width: 22px;
-  height: 22px;
-  font-size: 0.8rem;
 }
 .cnot-link {
   position: absolute;

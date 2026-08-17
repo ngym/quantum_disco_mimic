@@ -48,7 +48,7 @@ export const CHALLENGES = [
     judge: (c) =>
       inRange(c.probs[2], 0.45, 0.55) && inRange(c.probs[7], 0.45, 0.55) &&
       c.probs.every((p, i) => i === 2 || i === 7 || isSmall(p)),
-    hint: 'q0 と q2 が連動して変わる=「もつれ」が必要。q1 に X、q0 に H、そして q0 に CX を置いて「反転される行(X印)」を q2 に。',
+    hint: 'q0 と q2 が連動して変わる=「もつれ」が必要。q1 に X、q0 に H、そして CX を q2 に置き、C マーカーを q0 に。',
   },
   {
     title: '課題7',
@@ -58,7 +58,7 @@ export const CHALLENGES = [
       const targets = [0, 3, 5, 6];
       return c.probs.every((p, i) => (targets.includes(i) ? inRange(p, 0.22, 0.28) : isSmall(p)));
     },
-    hint: '4曲はどれも「1の数が偶数」。q0 と q1 に H、q0→q2 と q1→q2 に CX でパリティを書き込む。',
+    hint: '4曲はどれも「1の数が偶数」。q0 と q1 に H、そして CX を q2 に2列分置き、C をそれぞれ q0 と q1 に(パリティの書き込み)。',
   },
   {
     title: '課題8',

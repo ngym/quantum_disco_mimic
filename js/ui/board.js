@@ -1,7 +1,7 @@
 // 回路グリッドのDOM描画と操作(クリック配置 + Pointer Eventsによるドラッグ&ドロップ)。
 import { GATES, thetaLabel } from '../quantum/gates.js';
 import {
-  ROWS, numCols, placeGate, removeGate, cycleTheta, cycleCnotTarget, markerAt,
+  ROWS, numCols, placeGate, removeGate, cycleTheta, cycleCnotControl, markerAt,
 } from '../quantum/circuit.js';
 
 const DRAG_THRESHOLD = 6;
@@ -30,8 +30,8 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
         if (cell) {
           const tok = makeToken(cell.gateId);
           if (cell.gateId === 'CNOT' || cell.gateId === 'CCNOT') {
-            // 盤面では C-(C)-X が縦に並ぶ表示: 置いたトークンは制御「C」
-            tok.querySelector('.glyph').textContent = 'C';
+            // 置いた行が X(反転される側)。縦線の先に C マーカーが並ぶ
+            tok.querySelector('.glyph').textContent = 'X';
           } else if (cell.gateId === 'R') {
             const th = document.createElement('span');
             th.className = 'theta';
@@ -46,19 +46,12 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
           cellEl.appendChild(tok);
         } else {
           const marker = markerAt(circuit, r, c);
-          if (marker && marker.kind === 'target') {
-            const m = document.createElement('div');
-            m.className = 'cnot-plus';
-            m.dataset.ctrlRow = marker.ctrlRow;
-            m.textContent = 'X';
-            m.title = '反転される行(タップで切替)';
-            cellEl.appendChild(m);
-          } else if (marker && marker.kind === 'control') {
+          if (marker) {
             const m = document.createElement('div');
             m.className = 'cnot-ctrl';
-            m.dataset.ctrlRow = marker.ctrlRow;
+            m.dataset.gateRow = marker.gateRow;
             m.textContent = 'C';
-            m.title = 'CCXの2つ目の制御(この行が1のときだけ作動)';
+            m.title = '制御: この行が1のときだけ X が反転(CXはタップで行を切替)';
             cellEl.appendChild(m);
           }
         }
@@ -91,7 +84,7 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
         const cell = circuit[r][c];
         if (!cell || (cell.gateId !== 'CNOT' && cell.gateId !== 'CCNOT')) continue;
         // CCNOT は3行すべてを使うので列全体を結ぶ
-        const [rowA, rowB] = cell.gateId === 'CCNOT' ? [0, ROWS - 1] : [r, cell.target];
+        const [rowA, rowB] = cell.gateId === 'CCNOT' ? [0, ROWS - 1] : [r, cell.control];
         const ctrlEl = cellAt(rowA, c);
         const tgtEl = cellAt(rowB, c);
         if (!ctrlEl || !tgtEl) continue;
@@ -138,12 +131,12 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
       const row = +cellEl.dataset.row;
       const col = +cellEl.dataset.col;
       const tok = e.target.closest('.placed-token');
-      const plus = e.target.closest('.cnot-plus, .cnot-ctrl');
+      const ctrl = e.target.closest('.cnot-ctrl');
       if (tok) {
         drag = { source: 'board', gateId: tok.dataset.gate, row, col, startX: e.clientX, startY: e.clientY, moved: false, srcEl: tok };
         e.preventDefault();
-      } else if (plus) {
-        drag = { source: 'cnot-plus', ctrlRow: +plus.dataset.ctrlRow, col, startX: e.clientX, startY: e.clientY, moved: false };
+      } else if (ctrl) {
+        drag = { source: 'marker', gateRow: +ctrl.dataset.gateRow, col, startX: e.clientX, startY: e.clientY, moved: false };
         e.preventDefault();
       } else {
         drag = { source: 'cell', row, col, startX: e.clientX, startY: e.clientY, moved: false };
@@ -156,7 +149,7 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
     const dx = e.clientX - drag.startX;
     const dy = e.clientY - drag.startY;
     if (!drag.moved && Math.hypot(dx, dy) > DRAG_THRESHOLD) {
-      if (drag.source === 'cell' || drag.source === 'cnot-plus') { drag = null; return; }
+      if (drag.source === 'cell' || drag.source === 'marker') { drag = null; return; }
       drag.moved = true;
       showGhost(drag.gateId);
       if (drag.srcEl) drag.srcEl.classList.add('dragging');
@@ -199,10 +192,10 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
           changed = true;
           rerender = false;
         }
-        else if (d.gateId === 'CNOT' || d.gateId === 'CCNOT') { cycleCnotTarget(circuit, d.row, d.col); changed = true; }
-        else { removeGate(circuit, d.row, d.col); changed = true; }
-      } else if (d.source === 'cnot-plus') {
-        cycleCnotTarget(circuit, d.ctrlRow, d.col);
+        else if (d.gateId === 'CNOT') { cycleCnotControl(circuit, d.row, d.col); changed = true; }
+        else { removeGate(circuit, d.row, d.col); changed = true; } // CCXは残り2行が常にCなので切替なし
+      } else if (d.source === 'marker') {
+        cycleCnotControl(circuit, d.gateRow, d.col);
         changed = true;
       } else if (d.source === 'cell') {
         const sel = paletteApi.getSelected();
@@ -247,7 +240,7 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
     } else {
       const marker = markerAt(circuit, row, col);
       if (marker) {
-        removeGate(circuit, marker.ctrlRow, col);
+        removeGate(circuit, marker.gateRow, col);
         render();
         callbacks.onChange();
       }
