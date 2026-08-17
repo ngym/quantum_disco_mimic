@@ -38,7 +38,7 @@ export function placeGate(circuit, row, col, gateId) {
     if (target < 0) return false;
     circuit[row][col] = { gateId, target };
   } else if (gateId === 'R') {
-    circuit[row][col] = { gateId, theta: THETAS[3] }; // 初期値 π
+    circuit[row][col] = { gateId, theta: THETAS[0] }; // 初期値 0(タップで45°ずつ増える)
   } else {
     circuit[row][col] = { gateId };
   }

@@ -4,13 +4,13 @@ const S = Math.SQRT1_2;
 
 // Rゲートのθ巡回値(クリックで順に切替)
 export const THETAS = [
-  Math.PI / 4, Math.PI / 2, (3 * Math.PI) / 4, Math.PI,
+  0, Math.PI / 4, Math.PI / 2, (3 * Math.PI) / 4, Math.PI,
   (5 * Math.PI) / 4, (3 * Math.PI) / 2, (7 * Math.PI) / 4,
 ];
 
 export function thetaLabel(theta) {
   const n = Math.round(theta / (Math.PI / 4)); // π/4 の倍数
-  const table = { 1: 'π/4', 2: 'π/2', 3: '3π/4', 4: 'π', 5: '5π/4', 6: '3π/2', 7: '7π/4' };
+  const table = { 0: '0', 1: 'π/4', 2: 'π/2', 3: '3π/4', 4: 'π', 5: '5π/4', 6: '3π/2', 7: '7π/4' };
   return table[n] || `${(theta / Math.PI).toFixed(2)}π`;
 }
 
