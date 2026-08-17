@@ -29,9 +29,7 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
         const cell = circuit[r][c];
         if (cell) {
           if (cell.gateId === 'CNOT') {
-            const tok = makeToken('CNOT');
-            tok.textContent = '●';
-            cellEl.appendChild(tok);
+            cellEl.appendChild(makeToken('CNOT'));
           } else {
             const tok = makeToken(cell.gateId);
             if (cell.gateId === 'R') {
@@ -39,6 +37,11 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
               th.className = 'theta';
               th.textContent = thetaLabel(cell.theta);
               tok.appendChild(th);
+              // 選択中のθに合わせて「R」の文字を回転
+              const deg = (cell.theta * 180) / Math.PI;
+              const glyph = tok.querySelector('.glyph');
+              glyph.dataset.rot = deg;
+              glyph.style.transform = `rotate(${deg}deg)`;
             }
             cellEl.appendChild(tok);
           }
@@ -66,7 +69,10 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
     tok.className = 'gate-token placed-token';
     tok.dataset.gate = gateId;
     tok.style.background = g.color;
-    tok.textContent = g.label;
+    const glyph = document.createElement('span');
+    glyph.className = 'glyph';
+    glyph.textContent = g.label;
+    tok.appendChild(glyph);
     tok.title = g.name;
     return tok;
   }
@@ -167,12 +173,24 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
     if (callbacks.isLocked()) return;
 
     let changed = false;
+    let rerender = true;
     if (!d.moved) {
       // クリック(タップ)操作
       if (d.source === 'palette') {
         paletteApi.toggleSelect(d.gateId);
       } else if (d.source === 'board') {
-        if (d.gateId === 'R') { cycleTheta(circuit, d.row, d.col); changed = true; }
+        if (d.gateId === 'R') {
+          // θを巡回し、再描画せずにその場で「R」を回転(常に前向きに45°ずつ回す)
+          cycleTheta(circuit, d.row, d.col);
+          const cell = circuit[d.row][d.col];
+          const glyph = d.srcEl.querySelector('.glyph');
+          const rot = parseFloat(glyph.dataset.rot || '0') + 45;
+          glyph.dataset.rot = rot;
+          glyph.style.transform = `rotate(${rot}deg)`;
+          d.srcEl.querySelector('.theta').textContent = thetaLabel(cell.theta);
+          changed = true;
+          rerender = false;
+        }
         else if (d.gateId === 'CNOT') { cycleCnotTarget(circuit, d.row, d.col); changed = true; }
         else { removeGate(circuit, d.row, d.col); changed = true; }
       } else if (d.source === 'cnot-plus') {
@@ -203,7 +221,7 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
       }
     }
     if (changed) {
-      render();
+      if (rerender) render();
       callbacks.onChange();
     }
   }
@@ -229,11 +247,9 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
   }
 
   function showGhost(gateId) {
-    const g = GATES[gateId];
     ghostEl.innerHTML = '';
     const tok = makeToken(gateId);
     tok.classList.remove('placed-token');
-    tok.textContent = g.label;
     ghostEl.appendChild(tok);
     ghostEl.hidden = false;
   }

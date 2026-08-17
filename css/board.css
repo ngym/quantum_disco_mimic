@@ -48,6 +48,14 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.4);
   position: relative;
 }
+.gate-token .glyph {
+  display: inline-block;
+  transform-origin: 50% 50%;
+  transition: transform 0.2s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gate-token .glyph { transition: none; }
+}
 .gate-token .theta {
   position: absolute;
   bottom: -2px;
