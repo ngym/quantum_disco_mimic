@@ -32,7 +32,8 @@ DJブースの盤面に円形のゲートトークンを置いて量子回路を
 ビルド不要の静的サイトです。ESモジュールを使っているため、HTTPサーバー経由で開いてください。
 
 ```sh
-python3 -m http.server 8000
+python3 serve.py 8000   # キャッシュ無効ヘッダ付き(開発時のJS更新が確実に反映される)
+# または: python3 -m http.server 8000
 # → http://localhost:8000 をブラウザで開く
 ```
 
