@@ -38,7 +38,9 @@ export function placeGate(circuit, row, col, gateId) {
     if (target < 0) return false;
     circuit[row][col] = { gateId, target };
   } else if (gateId === 'R') {
-    circuit[row][col] = { gateId, theta: THETAS[0] }; // 初期値 0(タップで45°ずつ増える)
+    // 初期値は0以外のランダムな角度 — 「なんで斜めなの?」と興味を引く仕掛け
+    const theta = THETAS[1 + Math.floor(Math.random() * (THETAS.length - 1))];
+    circuit[row][col] = { gateId, theta };
   } else {
     circuit[row][col] = { gateId };
   }
