@@ -109,7 +109,20 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
 
   function cellFromPoint(x, y) {
     const el = document.elementFromPoint(x, y);
-    return el ? el.closest('.cell') : null;
+    const direct = el ? el.closest('.cell') : null;
+    if (direct && boardEl.contains(direct)) return direct;
+    // セル間の隙間や境界線上に落ちた場合は、近くのセルにスナップする
+    const TOLERANCE = 14;
+    let best = null;
+    let bestDist = Infinity;
+    for (const cellEl of boardEl.querySelectorAll('.cell')) {
+      const rect = cellEl.getBoundingClientRect();
+      const dx = Math.max(rect.left - x, 0, x - rect.right);
+      const dy = Math.max(rect.top - y, 0, y - rect.bottom);
+      const d = Math.hypot(dx, dy);
+      if (d < bestDist) { bestDist = d; best = cellEl; }
+    }
+    return bestDist <= TOLERANCE ? best : null;
   }
 
   function clearDropHints() {
