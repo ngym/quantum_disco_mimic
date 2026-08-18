@@ -4,7 +4,7 @@
 //   CNOT → 制御セルに置かれ target(対象行)を保持。対象セルは占有扱い。
 
 import { GATES, THETAS, rMatrix } from './gates.js';
-import { createState, applySingle, applyCNOT, applyCCNOT, NUM_QUBITS } from './state.js';
+import { createState, applySingle, applyCNOT, applyCCNOT, applyDiffusion, NUM_QUBITS } from './state.js';
 
 export const ROWS = NUM_QUBITS;
 export const MAX_COLS = 15;
@@ -26,11 +26,13 @@ export function cnotControlAt(circuit, row, col) {
   return -1;
 }
 
-// CCNOT は列全体(制御2+対象1)を占有する
-function ccnotInColumn(circuit, col) {
+// 列全体を占有するゲート(CCNOT: 制御2+対象1、G: 3行全体に作用)
+export const SPAN_GATES = new Set(['CCNOT', 'G']);
+
+function spanGateInColumn(circuit, col) {
   for (let r = 0; r < ROWS; r++) {
     const cell = circuit[r][col];
-    if (cell && cell.gateId === 'CCNOT') return r;
+    if (cell && SPAN_GATES.has(cell.gateId)) return r;
   }
   return -1;
 }
@@ -38,10 +40,10 @@ function ccnotInColumn(circuit, col) {
 export function cellOccupied(circuit, row, col) {
   return circuit[row][col] !== null
     || cnotControlAt(circuit, row, col) >= 0
-    || ccnotInColumn(circuit, col) >= 0;
+    || spanGateInColumn(circuit, col) >= 0;
 }
 
-// 空セルに描く制御マーカー C。なければ null。gateRow はトークン(X)の行。
+// 空セルに描くマーカー(C = 制御、span = 列全体ゲートの一部)。gateRow はトークンの行。
 export function markerAt(circuit, row, col) {
   if (circuit[row][col]) return null;
   for (let r = 0; r < ROWS; r++) {
@@ -49,6 +51,7 @@ export function markerAt(circuit, row, col) {
     if (!cell || r === row) continue;
     if (cell.gateId === 'CNOT' && cell.control === row) return { kind: 'control', gateRow: r };
     if (cell.gateId === 'CCNOT') return { kind: 'control', gateRow: r };
+    if (cell.gateId === 'G') return { kind: 'span', gateRow: r, label: 'G' };
   }
   return null;
 }
@@ -61,8 +64,8 @@ export function placeGate(circuit, row, col, gateId) {
     const control = pickFreeRow(circuit, row, col);
     if (control < 0) return false;
     circuit[row][col] = { gateId, control };
-  } else if (gateId === 'CCNOT') {
-    // 置いた行が X、残り2行が C(列全体を占有)
+  } else if (gateId === 'CCNOT' || gateId === 'G') {
+    // 列全体を占有(CCNOT: 置いた行が X で残りが C、G: 3行まとめて作用)
     for (let r = 0; r < ROWS; r++) {
       if (r !== row && cellOccupied(circuit, r, col)) return false;
     }
@@ -118,6 +121,8 @@ export function evaluate(circuit, upToCol = Infinity) {
         applyCNOT(state, cell.control, row);
       } else if (cell.gateId === 'CCNOT') {
         applyCCNOT(state, row);
+      } else if (cell.gateId === 'G') {
+        applyDiffusion(state);
       } else if (cell.gateId === 'R') {
         applySingle(state, row, rMatrix(cell.theta));
       } else {
@@ -130,7 +135,7 @@ export function evaluate(circuit, upToCol = Infinity) {
 
 // 課題の制約判定用(「X禁止」など)
 export function usedGateCounts(circuit) {
-  const counts = { X: 0, Y: 0, Z: 0, H: 0, R: 0, CNOT: 0, CCNOT: 0 };
+  const counts = { X: 0, Y: 0, Z: 0, H: 0, R: 0, CNOT: 0, CCNOT: 0, G: 0 };
   for (const rowCells of circuit) {
     for (const cell of rowCells) {
       if (cell) counts[cell.gateId]++;

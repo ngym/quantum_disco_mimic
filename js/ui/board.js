@@ -58,8 +58,14 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
             const m = document.createElement('div');
             m.className = 'cnot-ctrl';
             m.dataset.gateRow = marker.gateRow;
-            m.textContent = 'C';
-            m.title = '制御: この行が1のときだけ X が反転(CXはタップで行を切替)';
+            if (marker.kind === 'span') {
+              m.classList.add('span-marker');
+              m.textContent = marker.label;
+              m.title = 'Gゲートの一部(3行まとめて作用)';
+            } else {
+              m.textContent = 'C';
+              m.title = '制御: この行が1のときだけ X が反転(CXはタップで行を切替)';
+            }
             cellEl.appendChild(m);
           }
         }
@@ -90,9 +96,9 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < numCols(circuit); c++) {
         const cell = circuit[r][c];
-        if (!cell || (cell.gateId !== 'CNOT' && cell.gateId !== 'CCNOT')) continue;
-        // CCNOT は3行すべてを使うので列全体を結ぶ
-        const [rowA, rowB] = cell.gateId === 'CCNOT' ? [0, ROWS - 1] : [r, cell.control];
+        if (!cell || (cell.gateId !== 'CNOT' && cell.gateId !== 'CCNOT' && cell.gateId !== 'G')) continue;
+        // CCNOT / G は3行すべてを使うので列全体を結ぶ
+        const [rowA, rowB] = cell.gateId === 'CNOT' ? [r, cell.control] : [0, ROWS - 1];
         const ctrlEl = cellAt(rowA, c);
         const tgtEl = cellAt(rowB, c);
         if (!ctrlEl || !tgtEl) continue;
@@ -100,6 +106,7 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
         const b = tgtEl.getBoundingClientRect();
         const link = document.createElement('div');
         link.className = 'cnot-link';
+        if (cell.gateId === 'G') link.classList.add('g-link');
         const x = a.left + a.width / 2 - boardRect.left - 1.25;
         const top = Math.min(a.top + a.height / 2, b.top + b.height / 2) - boardRect.top;
         const bottom = Math.max(a.top + a.height / 2, b.top + b.height / 2) - boardRect.top;
@@ -351,7 +358,7 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
         const ncr = m.cell.control + dr;
         if (ncr < 0 || ncr >= ROWS) return false;
         gateCells.add(keyOf(ncr, nc));
-      } else if (m.cell.gateId === 'CCNOT') {
+      } else if (m.cell.gateId === 'CCNOT' || m.cell.gateId === 'G') {
         for (let r2 = 0; r2 < ROWS; r2++) gateCells.add(keyOf(r2, nc));
       }
       for (const k of gateCells) {

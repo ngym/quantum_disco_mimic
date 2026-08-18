@@ -186,6 +186,11 @@
   line-height: 1;
   background: var(--bg-panel);
 }
+/* Gゲート(列全体)の連結マーカー */
+.cell .cnot-ctrl.span-marker {
+  border-color: #ff6af0;
+  color: #ff6af0;
+}
 .cnot-link {
   position: absolute;
   width: 2.5px;
@@ -193,6 +198,7 @@
   z-index: 0;
   pointer-events: none;
 }
+.cnot-link.g-link { background: #ff6af0; }
 
 /* コントロール */
 #controls {

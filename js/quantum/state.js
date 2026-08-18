@@ -60,6 +60,20 @@ export function applyCCNOT(s, target) {
   }
 }
 
+// グローバーの拡散演算子 D = 2|s⟩⟨s| − I(平均まわりの反転)。
+// 位相反転で印をつけた基底の振幅が増幅される。3量子ビット全体に作用。
+export function applyDiffusion(s) {
+  let mr = 0;
+  let mi = 0;
+  for (let i = 0; i < DIM; i++) { mr += s.re[i]; mi += s.im[i]; }
+  mr /= DIM;
+  mi /= DIM;
+  for (let i = 0; i < DIM; i++) {
+    s.re[i] = 2 * mr - s.re[i];
+    s.im[i] = 2 * mi - s.im[i];
+  }
+}
+
 export function probabilities(s) {
   const p = new Float64Array(DIM);
   for (let i = 0; i < DIM; i++) p[i] = s.re[i] * s.re[i] + s.im[i] * s.im[i];

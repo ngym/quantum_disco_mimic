@@ -63,4 +63,8 @@ export const GATES = {
     id: 'CCNOT', label: 'CCX', caption: '2条件反転', name: 'CCXゲート(トフォリ/CCNOT: 2つの C が両方1のとき X の行を反転)', color: '#7dff6a',
     isCcnot: true,
   },
+  G: {
+    id: 'G', label: 'G', caption: '振幅増幅', name: 'Gゲート(グローバーの拡散: 位相で印をつけた曲の振幅を増幅。3行全体に作用)', color: '#ff6af0',
+    isDiffusion: true,
+  },
 };
