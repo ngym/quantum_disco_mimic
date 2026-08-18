@@ -101,6 +101,7 @@
 }
 
 /* 観測結果の発表 */
+#announce[hidden] { display: none; }
 #announce {
   position: absolute;
   inset: 0;

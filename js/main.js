@@ -83,14 +83,26 @@ function pruneDisallowedGates() {
 
 // ---- 観測 ----
 
-async function runRoulette(winner, durMs, onIndex) {
-  // 8タイルを周回するハイライトが減速しながら winner で止まる
+async function runRoulette(winner, probs, durMs, onIndex) {
+  // 確率が乗っている曲だけを周回するハイライトが、減速しながら winner で止まる。
+  // 確率の高い曲ほど少し長く滞在する。
+  const candidates = [];
+  for (let i = 0; i < probs.length; i++) if (probs[i] > 1e-3) candidates.push(i);
+  if (!candidates.includes(winner)) candidates.push(winner);
+  if (candidates.length === 1) {
+    // 確定状態: 回さずにタメだけ作る
+    onIndex(winner);
+    await new Promise((r) => setTimeout(r, durMs));
+    return;
+  }
   const seq = [];
-  for (let k = 0; k < 24; k++) seq.push(k % 8);
-  let next = seq[seq.length - 1];
-  do { next = (next + 1) % 8; seq.push(next); } while (next !== winner);
+  const rounds = Math.max(3, Math.ceil(24 / candidates.length));
+  for (let k = 0; k < rounds * candidates.length; k++) seq.push(candidates[k % candidates.length]);
+  let next = (candidates.indexOf(seq[seq.length - 1]) + 1) % candidates.length;
+  while (candidates[next] !== winner) { seq.push(candidates[next]); next = (next + 1) % candidates.length; }
+  seq.push(winner);
   const ratio = 1.09;
-  const weights = seq.map((_, k) => ratio ** k);
+  const weights = seq.map((idx, k) => ratio ** k * (0.5 + probs[idx]));
   const total = weights.reduce((a, b) => a + b, 0);
   for (let k = 0; k < seq.length; k++) {
     onIndex(seq[k]);
@@ -107,7 +119,7 @@ async function onMeasure() {
   const { outcome } = measure(currentState);
   const spinMs = 2200;
   await Promise.all([
-    runRoulette(outcome, spinMs, (i) => {
+    runRoulette(outcome, currentProbs, spinMs, (i) => {
       floor.setRoulette(i);
       meter.setRoulette(i);
     }),
