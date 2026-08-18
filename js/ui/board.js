@@ -54,18 +54,20 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
           cellEl.appendChild(tok);
         } else {
           const marker = markerAt(circuit, r, c);
-          if (marker) {
+          if (marker && marker.kind === 'span') {
+            // G は3行対称なゲートなので、全行に同じ見た目のトークンを並べる
+            const twin = makeToken('G');
+            twin.classList.remove('placed-token');
+            twin.classList.add('span-twin');
+            twin.dataset.gateRow = marker.gateRow;
+            if (selection.has(keyOf(marker.gateRow, c))) twin.classList.add('multi-selected');
+            cellEl.appendChild(twin);
+          } else if (marker) {
             const m = document.createElement('div');
             m.className = 'cnot-ctrl';
             m.dataset.gateRow = marker.gateRow;
-            if (marker.kind === 'span') {
-              m.classList.add('span-marker');
-              m.textContent = marker.label;
-              m.title = 'Gゲートの一部(3行まとめて作用)';
-            } else {
-              m.textContent = 'C';
-              m.title = '制御: この行が1のときだけ X が反転(CXはタップで行を切替)';
-            }
+            m.textContent = 'C';
+            m.title = '制御: この行が1のときだけ X が反転(CXはタップで行を切替)';
             cellEl.appendChild(m);
           }
         }
@@ -158,6 +160,15 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
     if (cellEl && boardEl.contains(cellEl)) {
       const row = +cellEl.dataset.row;
       const col = +cellEl.dataset.col;
+      const twin = e.target.closest('.span-twin');
+      if (twin) {
+        // Gの分身はどの行でも本体と同じ操作(ドラッグで移動、タップで削除)
+        const gateRow = +twin.dataset.gateRow;
+        const source = selection.has(keyOf(gateRow, col)) ? 'group' : 'board';
+        drag = { source, gateId: 'G', row: gateRow, col, startX: e.clientX, startY: e.clientY, moved: false, srcEl: twin };
+        e.preventDefault();
+        return;
+      }
       const tok = e.target.closest('.placed-token');
       const ctrl = e.target.closest('.cnot-ctrl');
       if (tok) {
