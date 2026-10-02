@@ -8,6 +8,7 @@ import { createBoard } from './ui/board.js';
 import { createFloor, createMeter } from './ui/floor.js';
 import { setPartyFromProbs, setParty, strobe, showAnnounce, hideAnnounce } from './ui/fx.js';
 import { createCourses } from './courses/courses.js';
+import { applyStaticTranslations, localized, setLanguage, t } from './i18n.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -36,6 +37,18 @@ const courses = createCourses($('#course-panel'), {
     syncTabs();
     pruneDisallowedGates();
   },
+});
+
+for (const select of document.querySelectorAll('#language-select, .language-select')) select.addEventListener('change', (event) => {
+  setLanguage(event.target.value);
+  applyStaticTranslations();
+  palette.render();
+  board.render();
+  meter.renderLanguage();
+  courses.render();
+  if (measured !== null) showAnnounce(announceEl, measured);
+  updateMuteLabel();
+  if (!progressEl.hidden && !overlay.classList.contains('hidden')) renderAudioProgress();
 });
 
 const board = createBoard($('#board'), palette, $('#drag-ghost'), circuit, {
@@ -185,9 +198,13 @@ function syncTabs() {
 }
 
 const muteBtn = $('#mute-btn');
+function updateMuteLabel() {
+  muteBtn.textContent = engine.muted ? '🔇' : '🔊';
+  muteBtn.title = t(engine.muted ? 'unmute' : 'mute');
+}
 muteBtn.addEventListener('click', () => {
   engine.setMuted(!engine.muted);
-  muteBtn.textContent = engine.muted ? '🔇' : '🔊';
+  updateMuteLabel();
 });
 
 // ---- スタートオーバーレイ ----
@@ -197,20 +214,35 @@ const enterBtn = $('#enter-btn');
 const progressEl = $('#render-progress');
 const progressFill = progressEl.querySelector('.fill');
 const progressLabel = progressEl.querySelector('.progress-label');
+let audioProgress = null;
+let audioError = null;
+
+function renderAudioProgress() {
+  if (audioError) {
+    progressLabel.textContent = t('audioError') + audioError.message;
+  } else if (audioProgress) {
+    const [done, totalCount] = audioProgress;
+    progressLabel.textContent = done < totalCount
+      ? `${t('preparing')} ${localized(SONG_META[done], 'name')}` : t('ready');
+  } else {
+    progressLabel.textContent = t('preparing');
+  }
+}
 
 enterBtn.addEventListener('click', async () => {
   enterBtn.disabled = true;
   progressEl.hidden = false;
   try {
     await engine.init((done, totalCount) => {
+      audioProgress = [done, totalCount];
       progressFill.style.width = `${(done / totalCount) * 100}%`;
-      progressLabel.textContent = done < totalCount
-        ? `音楽を合成中… ${SONG_META[done].name}` : '準備完了!';
+      renderAudioProgress();
     });
     engine.start();
     engine.setMix(currentProbs.map(Math.sqrt));
   } catch (err) {
-    progressLabel.textContent = '音声の初期化に失敗しました: ' + err.message;
+    audioError = err;
+    renderAudioProgress();
     console.error(err);
     return;
   }
@@ -218,5 +250,7 @@ enterBtn.addEventListener('click', async () => {
 });
 
 // ---- 初期化 ----
+applyStaticTranslations();
+updateMuteLabel();
 courses.setMode('lesson');
 recompute();

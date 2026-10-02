@@ -71,3 +71,32 @@ export const CHALLENGES = [
 
 export const TRY_DONE_TEXT =
   '🏆 全課題クリア!キミはもう量子DJだ。「フリー」コースで最大15ステップの自由なプログラミングを楽しもう。ここで学んだ X・Y・Z・H・R・CX・CCX は、本物の量子コンピュータのプログラミングでもそのまま使われている記号だ。';
+
+const CHALLENGE_TEXT_EN = [
+  'Play song <code>101</code>, “Electropop”, with 100% probability.',
+  'Mix songs <code>000</code> and <code>100</code> at exactly 50% each.',
+  'Mix all eight songs equally (12.5% each).',
+  'Make song <code>011</code>, “House”, reach 100% <strong>without using X</strong>.',
+  'Raise the probability of song <code>110</code>, “Hip-hop”, to at least 80% but below 100%.',
+  'Give <strong>only</strong> songs <code>010</code> and <code>111</code> 50% each.',
+  'Give songs <code>000</code>, <code>011</code>, <code>101</code>, and <code>110</code> 25% each.',
+  '<strong>Grover search:</strong> Mark a song with phase, then use <code>G</code> (amplitude amplification) to raise song <code>111</code>, “Drum and Bass”, above 90% but below 100%.',
+];
+const CHALLENGE_HINT_EN = [
+  'Put X on q0 and q2.',
+  'Only q0 differs. Put one H on q0.',
+  'Put H on every row.',
+  'H → R(π) → H acts like X through interference. Use it on q1 and q2.',
+  'H → R(3π/4) → H gives about 85% on one row. Use X to flip another row with certainty.',
+  'q0 and q2 must change together: this needs entanglement. Put X on q1, H on q0, then CX on q2 with its C marker on q0.',
+  'These four results have an even number of 1 bits. Put H on q0 and q1. Place CX on q2 in two columns, controlled by q0 and q1 respectively.',
+  '① Put H on all rows for eight equal outcomes. ② Oracle: H → CCX → H on q2 flips the phase of 111 only (CCZ); the sound stays the same. ③ G amplifies it to about 78%. ④ Repeat steps ② and ③ to reach about 94.5% (nine columns total). G acts like H on all rows → X on all rows → CCZ → X on all rows → H on all rows.',
+];
+CHALLENGES.forEach((challenge, index) => {
+  challenge.titleEn = `Challenge ${index + 1}`;
+  challenge.textEn = CHALLENGE_TEXT_EN[index];
+  challenge.hintEn = CHALLENGE_HINT_EN[index];
+});
+
+export const TRY_DONE_TEXT_EN =
+  '🏆 All challenges cleared! You are a quantum DJ. Use Free mode to build a circuit with up to 15 columns. X, Y, Z, H, R, CX, and CCX are also used in real quantum programming.';

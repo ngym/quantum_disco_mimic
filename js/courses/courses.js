@@ -1,6 +1,7 @@
 // コース管理: レッスン/トライ/フリーの切替、進行状態、パネル描画、達成判定。
-import { LESSON_STEPS, LESSON_DONE_TEXT } from './lessons.js';
-import { CHALLENGES, TRY_DONE_TEXT } from './challenges.js';
+import { LESSON_STEPS, LESSON_DONE_TEXT, LESSON_DONE_TEXT_EN } from './lessons.js';
+import { CHALLENGES, TRY_DONE_TEXT, TRY_DONE_TEXT_EN } from './challenges.js';
+import { getLanguage, localized, t } from '../i18n.js';
 
 const STORAGE_KEY = 'qdisco-cleared';
 
@@ -32,28 +33,28 @@ export function createCourses(panelEl, { onAllowedChange }) {
   function render() {
     if (mode === 'free') {
       panelEl.innerHTML = `
-        <span class="panel-badge">フリー</span>
-        <div class="panel-text">自由に量子プログラミング!すべてのゲート(X・Y・Z・H・R・CX・CCX・G)と15ステップが使える。お気に入りのミックスを作って <code>M</code> でフロアに落とそう。グローバー探索(課題8のヒント参照)を組んでみるのもおすすめ。</div>`;
+        <span class="panel-badge">${t('free')}</span>
+        <div class="panel-text">${t('freeDescription')}</div>`;
       return;
     }
 
     if (mode === 'lesson') {
       if (lessonComplete) {
         panelEl.innerHTML = `
-          <span class="panel-badge ok">レッスン修了</span>
-          <div class="panel-text">${LESSON_DONE_TEXT}</div>
-          <div class="panel-actions"><button class="panel-btn primary" data-act="goto-try">トライへ →</button></div>`;
+          <span class="panel-badge ok">${t('lessonComplete')}</span>
+          <div class="panel-text">${getLanguage() === 'en' ? LESSON_DONE_TEXT_EN : LESSON_DONE_TEXT}</div>
+          <div class="panel-actions"><button class="panel-btn primary" data-act="goto-try">${t('goToChallenges')}</button></div>`;
         bind();
         return;
       }
       const step = LESSON_STEPS[lessonStep];
       const successHtml = stepDone && !step.needNext
-        ? '<br><span class="success-msg">✨ できた!</span>' : '';
+        ? `<br><span class="success-msg">${t('done')}</span>` : '';
       const nextBtn = (step.needNext || stepDone)
-        ? '<button class="panel-btn primary" data-act="next-step">次へ →</button>' : '';
+        ? `<button class="panel-btn primary" data-act="next-step">${t('next')}</button>` : '';
       panelEl.innerHTML = `
-        <span class="panel-badge">レッスン ${lessonStep + 1}/${LESSON_STEPS.length}</span>
-        <div class="panel-text">${step.text}${successHtml}</div>
+        <span class="panel-badge">${t('lesson')} ${lessonStep + 1}/${LESSON_STEPS.length}</span>
+        <div class="panel-text">${localized(step, 'text')}${successHtml}</div>
         <div class="panel-actions">${nextBtn}</div>`;
       bind();
       return;
@@ -67,23 +68,23 @@ export function createCourses(panelEl, { onAllowedChange }) {
       const cls = ['challenge-dot'];
       if (i === challengeIdx) cls.push('current');
       if (cleared.has(i)) cls.push('cleared');
-      return `<button class="${cls.join(' ')}" data-act="goto-challenge" data-i="${i}" title="${c.title}">${cleared.has(i) ? '✓' : i + 1}</button>`;
+      return `<button class="${cls.join(' ')}" data-act="goto-challenge" data-i="${i}" title="${localized(c, 'title')}">${cleared.has(i) ? '✓' : i + 1}</button>`;
     }).join('');
     const status = isCleared
-      ? '<span class="panel-badge ok">✓ クリア!</span>'
-      : `<span class="panel-badge">${ch.title}</span>`;
+      ? `<span class="panel-badge ok">${t('cleared')}</span>`
+      : `<span class="panel-badge">${localized(ch, 'title')}</span>`;
     const nextBtn = isCleared && challengeIdx < CHALLENGES.length - 1
-      ? '<button class="panel-btn primary" data-act="next-challenge">次の課題 →</button>' : '';
-    const doneMsg = allCleared ? `<br><span class="success-msg">${TRY_DONE_TEXT}</span>` : '';
+      ? `<button class="panel-btn primary" data-act="next-challenge">${t('nextChallenge')}</button>` : '';
+    const doneMsg = allCleared ? `<br><span class="success-msg">${getLanguage() === 'en' ? TRY_DONE_TEXT_EN : TRY_DONE_TEXT}</span>` : '';
     panelEl.innerHTML = `
       ${status}
       <div class="challenge-list">${dots}</div>
-      <div class="panel-text">${ch.text}${doneMsg}</div>
+      <div class="panel-text">${localized(ch, 'text')}${doneMsg}</div>
       <div class="panel-actions">
         ${nextBtn}
-        <button class="panel-btn ghost" data-act="toggle-hint">${showHint ? 'ヒントを隠す' : 'ヒント'}</button>
+        <button class="panel-btn ghost" data-act="toggle-hint">${t(showHint ? 'hideHint' : 'hint')}</button>
       </div>
-      ${showHint ? `<div class="hint-text">💡 ${ch.hint}</div>` : ''}`;
+      ${showHint ? `<div class="hint-text">💡 ${localized(ch, 'hint')}</div>` : ''}`;
     bind();
   }
 

@@ -1,5 +1,6 @@
 // 照明・ストロボなどの演出制御(CSSクラス・CSS変数の着脱)。
 import { SONG_META } from '../audio/songs.js';
+import { localized } from '../i18n.js';
 
 const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -24,7 +25,7 @@ export function strobe(floorAreaEl) {
 
 export function showAnnounce(announceEl, songIndex) {
   const meta = SONG_META[songIndex];
-  announceEl.querySelector('.announce-song').textContent = meta.name;
+  announceEl.querySelector('.announce-song').textContent = localized(meta, 'name');
   announceEl.querySelector('.announce-bits').textContent = `|${meta.bits}⟩`;
   announceEl.hidden = false;
 }

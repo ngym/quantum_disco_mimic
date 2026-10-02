@@ -1,5 +1,6 @@
 // ダンスフロア(Canvas)と確率メーターの描画。
 import { SONG_META } from '../audio/songs.js';
+import { localized } from '../i18n.js';
 
 const NUM = SONG_META.length;
 const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -86,7 +87,7 @@ export function createMeter(el) {
         <div class="phase-dial" hidden></div>
       </div>
       <div class="meter-bits">${meta.bits}</div>
-      <div class="meter-name">${meta.name}</div>`;
+      <div class="meter-name">${localized(meta, 'name')}</div>`;
     el.appendChild(col);
     return {
       col,
@@ -97,6 +98,9 @@ export function createMeter(el) {
   });
 
   return {
+    renderLanguage() {
+      cols.forEach((c, i) => { c.col.querySelector('.meter-name').textContent = localized(SONG_META[i], 'name'); });
+    },
     update(probs, phases) {
       for (let i = 0; i < NUM; i++) {
         const p = probs[i];

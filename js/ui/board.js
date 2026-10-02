@@ -1,5 +1,6 @@
 // 回路グリッドのDOM描画と操作(クリック配置 + Pointer Eventsによるドラッグ&ドロップ)。
 import { GATES, thetaLabel } from '../quantum/gates.js';
+import { localized, t } from '../i18n.js';
 import {
   ROWS, numCols, placeGate, removeGate, cycleTheta, cycleCnotControl, markerAt, cellOccupied,
 } from '../quantum/circuit.js';
@@ -67,7 +68,7 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
             m.className = 'cnot-ctrl';
             m.dataset.gateRow = marker.gateRow;
             m.textContent = 'C';
-            m.title = '制御: この行が1のときだけ X が反転(CXはタップで行を切替)';
+            m.title = t('controlTitle');
             cellEl.appendChild(m);
           }
         }
@@ -88,7 +89,7 @@ export function createBoard(boardEl, paletteApi, ghostEl, circuit, callbacks) {
     glyph.className = 'glyph';
     glyph.textContent = g.label;
     tok.appendChild(glyph);
-    tok.title = g.name;
+    tok.title = localized(g, 'name');
     return tok;
   }
 

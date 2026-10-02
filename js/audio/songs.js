@@ -22,6 +22,9 @@ export const SONG_META = [
   { index: 7, bits: '111', name: 'ドラムンベース',  color: '#ff6af0' },
 ];
 
+const SONG_NAMES_EN = ['Disco', 'Funk', 'Techno', 'House', 'Chillout', 'Electropop', 'Hip-hop', 'Drum and Bass'];
+SONG_META.forEach((song, index) => { song.nameEn = SONG_NAMES_EN[index]; });
+
 // pattern: 16文字/小節。'.' 以外の文字でコールバック(文字はアクセント等に使える)
 function steps(pattern, cb) {
   for (let bar = 0; bar < 4; bar++) {

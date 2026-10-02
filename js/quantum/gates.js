@@ -68,3 +68,18 @@ export const GATES = {
     isDiffusion: true,
   },
 };
+
+const GATE_EN = {
+  X: ['Bit flip', 'X gate (bit flip)'],
+  Y: ['Flip + phase', 'Y gate (bit and phase flip)'],
+  Z: ['Phase flip', 'Z gate (phase flip = R(π))'],
+  H: ['Superposition', 'H gate (superposition)'],
+  R: ['Phase rotation', 'R gate (phase rotation)'],
+  CNOT: ['Controlled flip', 'CX gate (flip X when the C row is 1; can create entanglement)'],
+  CCNOT: ['Two controls', 'CCX gate (flip X when both C rows are 1)'],
+  G: ['Amplify', 'G gate (Grover diffusion: amplifies marked songs across all three rows)'],
+};
+for (const [id, [captionEn, nameEn]] of Object.entries(GATE_EN)) {
+  GATES[id].captionEn = captionEn;
+  GATES[id].nameEn = nameEn;
+}

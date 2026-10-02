@@ -51,3 +51,18 @@ export const LESSON_STEPS = [
 
 export const LESSON_DONE_TEXT =
   '🎓 レッスン完了!「重ね合わせ」で全曲を同時に鳴らし、「位相と干渉」で確率を操り、「観測」で答えを取り出す——これが量子コンピュータの計算の基本イメージだ。次は「トライ」コースで腕試ししよう!';
+
+const LESSON_TEXT_EN = [
+  'Welcome to Quantum Computer Disco! Three qubits select eight records. All bits start at <code>0</code>, so only song <code>000</code>, “Disco”, plays. Listen to this starting state.',
+  'An <code>X</code> gate flips a bit. Place X on the bottom row (q2).<span class="goal">Goal: play only song 001, “Funk”</span>',
+  'Combine X gates to select any of the eight songs.<span class="goal">Goal: play only song 101, “Electropop”</span>(Hint: flip q0 and q2.)',
+  'Now press the gold <code>M</code> button to measure. With a certain outcome, every measurement plays the same song.',
+  'Reset, then put an <code>H</code> gate on any row. H creates a superposition: you hear two songs together!<span class="goal">Goal: make a 50/50 mix of two songs</span>',
+  'Put H on all three rows to mix all eight songs equally (12.5% each). Then press <code>M</code>. The song you get is random.',
+  '<code>R</code> rotates phase (tap it to change the angle by 45°). Place R to the right of H. The sound and probabilities stay the same, but the colored phase dial in the meter turns. Phase becomes important when states interfere.',
+  'Reset and put <code>H → R(π) → H</code> on q0 (tap R until it shows π). The second H makes waves cancel and changes the song without X.<span class="goal">Goal: make song 100, “Chillout”, reach 100% without X</span>',
+];
+LESSON_STEPS.forEach((step, index) => { step.textEn = LESSON_TEXT_EN[index]; });
+
+export const LESSON_DONE_TEXT_EN =
+  '🎓 Lessons complete! Superposition plays multiple possibilities, phase and interference change their probabilities, and measurement picks one result. Try the challenges next!';
