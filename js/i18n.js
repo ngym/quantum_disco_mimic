@@ -36,6 +36,13 @@ const TEXT = {
   nextChallenge: ['次の課題 →', 'Next challenge →'],
   hideHint: ['ヒントを隠す', 'Hide hint'],
   hint: ['ヒント', 'Hint'],
+  tryRule: ['回路で条件を満たしたら、<code>M</code> で観測してクリア', 'Meet the goal with your circuit, then press <code>M</code> to measure and clear.'],
+  tryReady: ['✅ 回路は正解!金色の <code>M</code> で観測してフロアに流そう', '✅ The circuit is correct! Press the gold <code>M</code> to measure and play it on the floor.'],
+  tryMiss: ['観測はできたけど、回路がまだ条件を満たしていない(確率メーターを見てみよう)', 'Measured, but the circuit does not meet the goal yet (check the probability meter).'],
+  tryCleared: ['🎉 クリア!「{song}」({bits})がフロアに — {tail}', '🎉 Cleared! “{song}” ({bits}) is on the floor — {tail}'],
+  tryCertain: ['確率100%なので必ずこの曲', 'it had 100% probability, so it always plays'],
+  tryChance: ['この曲が出る確率は{pct}%', 'this song had a {pct}% chance'],
+  tryUnlikely: ['(低い方が出た!)', ' (the less likely outcome came up!)'],
   controlTitle: ['制御: この行が1のときだけ X が反転(CXはタップで行を切替)', 'Control: X flips only when this row is 1 (tap CX to change the control row)'],
 };
 

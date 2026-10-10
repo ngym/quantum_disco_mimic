@@ -42,6 +42,8 @@
   font-size: 0.85em;
 }
 .panel-text .success-msg { color: var(--ok); font-weight: bold; }
+.panel-text .ready-msg { color: #ffc53d; font-weight: bold; }
+.panel-text .rule-note { color: var(--fg-dim); font-size: 0.8rem; }
 .panel-actions {
   flex: 0 0 auto;
   display: flex;

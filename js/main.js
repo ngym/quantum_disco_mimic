@@ -57,7 +57,10 @@ const board = createBoard($('#board'), palette, $('#drag-ghost'), circuit, {
 });
 
 function buildCtx() {
-  return { probs: currentProbs, phases: currentPhases, counts: usedGateCounts(circuit), measured };
+  return {
+    probs: currentProbs, phases: currentPhases, counts: usedGateCounts(circuit), measured,
+    sig: JSON.stringify(circuit), // 回路の同一性(観測結果の表示を回路に結びつける)
+  };
 }
 
 function recompute() {

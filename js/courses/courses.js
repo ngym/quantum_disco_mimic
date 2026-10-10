@@ -1,9 +1,13 @@
 // コース管理: レッスン/トライ/フリーの切替、進行状態、パネル描画、達成判定。
 import { LESSON_STEPS, LESSON_DONE_TEXT, LESSON_DONE_TEXT_EN } from './lessons.js';
 import { CHALLENGES, TRY_DONE_TEXT, TRY_DONE_TEXT_EN } from './challenges.js';
+import { SONG_META } from '../audio/songs.js';
 import { getLanguage, localized, t } from '../i18n.js';
 
 const STORAGE_KEY = 'qdisco-cleared';
+
+// 翻訳文の {name} を値で置き換える
+const fill = (template, values) => template.replace(/\{(\w+)\}/g, (_, k) => String(values[k]));
 
 export function createCourses(panelEl, { onAllowedChange }) {
   let mode = 'lesson';
@@ -12,6 +16,11 @@ export function createCourses(panelEl, { onAllowedChange }) {
   let lessonComplete = false;
   let challengeIdx = 0;
   let showHint = false;
+  // トライは「回路で条件を満たす → M で観測」の2段階でクリア。
+  // 観測結果は、同じ課題・同じ回路のあいだだけ表示する(回路を変えたら消える)。
+  let lastCtx = null;
+  let tryResult = null; // { idx, sig, outcome, p, ok }
+  let lastTryKey = '';
   let cleared;
   try {
     cleared = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
@@ -28,6 +37,32 @@ export function createCourses(panelEl, { onAllowedChange }) {
     if (mode === 'try') return CHALLENGES[challengeIdx].allowed;
     if (lessonComplete) return ['X', 'H', 'R'];
     return LESSON_STEPS[lessonStep].allowed;
+  }
+
+  function tryStatus() {
+    const ok = lastCtx ? CHALLENGES[challengeIdx].judge(lastCtx) : false;
+    const res = tryResult && lastCtx && tryResult.idx === challengeIdx && tryResult.sig === lastCtx.sig
+      ? tryResult : null;
+    return { ok, res };
+  }
+
+  function tryKey() {
+    const { ok, res } = tryStatus();
+    return JSON.stringify([challengeIdx, ok, res, cleared.has(challengeIdx)]);
+  }
+
+  function tryStatusHtml({ ok, res }) {
+    if (res && res.ok) {
+      const meta = SONG_META[res.outcome];
+      const tail = res.p >= 0.99
+        ? t('tryCertain')
+        : fill(t('tryChance'), { pct: Math.round(res.p * 100) }) + (res.p < 0.5 ? t('tryUnlikely') : '');
+      const msg = fill(t('tryCleared'), { song: localized(meta, 'name'), bits: meta.bits, tail });
+      return `<span class="success-msg">${msg}</span>`;
+    }
+    if (res) return `<span class="rule-note">${t('tryMiss')}</span>`;
+    if (ok) return `<span class="ready-msg">${t('tryReady')}</span>`;
+    return `<span class="rule-note">${t('tryRule')}</span>`;
   }
 
   function render() {
@@ -76,10 +111,11 @@ export function createCourses(panelEl, { onAllowedChange }) {
     const nextBtn = isCleared && challengeIdx < CHALLENGES.length - 1
       ? `<button class="panel-btn primary" data-act="next-challenge">${t('nextChallenge')}</button>` : '';
     const doneMsg = allCleared ? `<br><span class="success-msg">${getLanguage() === 'en' ? TRY_DONE_TEXT_EN : TRY_DONE_TEXT}</span>` : '';
+    lastTryKey = tryKey();
     panelEl.innerHTML = `
       ${status}
       <div class="challenge-list">${dots}</div>
-      <div class="panel-text">${localized(ch, 'text')}${doneMsg}</div>
+      <div class="panel-text">${localized(ch, 'text')}<br>${tryStatusHtml(tryStatus())}${doneMsg}</div>
       <div class="panel-actions">
         ${nextBtn}
         <button class="panel-btn ghost" data-act="toggle-hint">${t(showHint ? 'hideHint' : 'hint')}</button>
@@ -123,7 +159,9 @@ export function createCourses(panelEl, { onAllowedChange }) {
       onAllowedChange();
     },
     // 回路変更・観測のたびに呼ばれる。達成判定を行い必要ならパネルを更新。
+    // ctx = { probs, phases, counts, measured, sig }(probs は観測前の確率)
     update(ctx) {
+      lastCtx = ctx;
       if (mode === 'lesson' && !lessonComplete) {
         const step = LESSON_STEPS[lessonStep];
         if (!stepDone && step.check && step.check(ctx)) {
@@ -131,9 +169,16 @@ export function createCourses(panelEl, { onAllowedChange }) {
           render();
         }
       } else if (mode === 'try') {
-        if (!cleared.has(challengeIdx) && CHALLENGES[challengeIdx].judge(ctx)) {
-          cleared.add(challengeIdx);
-          persist();
+        if (ctx.measured !== null) {
+          // 観測した瞬間に判定: 回路が条件を満たしていればクリア(出た曲は問わない)
+          const ok = CHALLENGES[challengeIdx].judge(ctx);
+          tryResult = { idx: challengeIdx, sig: ctx.sig, outcome: ctx.measured, p: ctx.probs[ctx.measured], ok };
+          if (ok && !cleared.has(challengeIdx)) {
+            cleared.add(challengeIdx);
+            persist();
+          }
+          render();
+        } else if (tryKey() !== lastTryKey) {
           render();
         }
       }
